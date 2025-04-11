@@ -1,6 +1,7 @@
 # Introduction
-Purpose this project is to show how will look AutoMapper profiles replaced by manual classes mapping. 
+Purpose of this project is to show how will look AutoMapper profiles replaced by manual classes mapping. 
 Using this app you can easily see how "good" and "reliable" is the mapping done automatically by AutoMapper library.
+Probably your AutoMapper mappings contains a lot of suspicious types conversions and you even not aware of it.
 This small console application uses Microsoft.CodeAnalysis to search project AutoMapper profiles and try to generate classes that do mapping manually.
 Then app generates a class that contains mapping functions for each profile found. 
 The generated class is saved in the specified output directory.
