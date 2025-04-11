@@ -47,6 +47,39 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
         _appConfiguration = appConfiguration;
     }
 
+    private static string GetGenericType(string type)
+    {
+        var split = type.Split(new[] { '<', '>', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (split.Length > 1)
+        {
+            return NormalizeType(split[1]);
+        }
+        return type;
+    }
+
+    private string FullTypeName(SolutionContext solutionContext, string type)
+    {
+        if (!string.IsNullOrEmpty(type) && _appConfiguration.UseFullNameSpace)
+        {
+            var lSymbol = solutionContext.TryGetSolutionSymbol(type);
+            if (lSymbol != null)
+            {
+                return lSymbol.ToDisplayString();
+            }
+        }
+
+        return type;
+    }
+    private string FullTypeName(ISymbol symbol, string type)
+    {
+        if (!string.IsNullOrEmpty(type) && _appConfiguration.UseFullNameSpace && symbol != null)
+        {
+            return symbol.ToDisplayString();
+        }
+
+        return type;
+    }
+
     private static bool IsEnumType(ISymbol symbol)
     {
         if (symbol == null)
@@ -154,21 +187,17 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
         {
             if (source.IsNullable)
             {
-                functionKey = "CastEnumNullable";
-                if (functions.TryGetValue(functionKey, out var f2))
+                if (functions.TryGetValue("CastEnumNullable", out var f2))
                 {
-                    usedTypes.TryAdd(functionKey, new ConvertFunctionDefinition(f2.FunctionName, f2.FunctionBody, false));
+                    usedTypes.TryAdd("CastEnumNullable", new ConvertFunctionDefinition(f2.FunctionName, f2.FunctionBody, false));
                     return CallGenericFunction(f2.FunctionName, sourceType, destinationType, expression);
                 }
             }
 
+            if (functions.TryGetValue("CastEnum", out var f3))
             {
-                functionKey = "CastEnum";
-                if (functions.TryGetValue(functionKey, out var f2))
-                {
-                    usedTypes.TryAdd(functionKey, new ConvertFunctionDefinition(f2.FunctionName, f2.FunctionBody, false));
-                    return CallGenericFunction(f2.FunctionName, sourceType, destinationType, expression);
-                }
+                usedTypes.TryAdd("CastEnum", new ConvertFunctionDefinition(f3.FunctionName, f3.FunctionBody, false));
+                return CallGenericFunction(f3.FunctionName, sourceType, destinationType, expression);
             }
         }
 
@@ -209,22 +238,29 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
                 if (collectionTypes.ContainsKey(ntype))
                 {
-                    var ltype = split[1];
-
-                    if (_appConfiguration.UseFullNameSpace)
-                    {
-                        var lSymbol = solutionContext.TryGetSolutionSymbol(ltype);
-                        if (lSymbol != null)
-                        {
-                            ltype = lSymbol.ToDisplayString();
-                        }
-                    }
+                    var ltype = FullTypeName(solutionContext, split[1]);
 
                     if (_primitiveTypes.ContainsKey(ltype))
                     {
                         var code = $"source.{source.Name} != null ? source.{source.Name}.ToList() : new List<{ltype}>()";
                         var exp = SyntaxFactory.ParseExpression(code);
                         return exp;
+                    }
+
+                    var sourceTypeName = GetGenericType(sourceType);
+                    var enumSymbol = solutionContext.TryGetSolutionSymbol(ltype);
+                    var sourceEnumSymbol = solutionContext.TryGetSolutionSymbol(sourceTypeName);
+                    if (IsEnumType(enumSymbol) && IsEnumType(sourceEnumSymbol))
+                    {
+                        if (functions.TryGetValue("CastEnum", out var f2))
+                        {
+                            usedTypes.TryAdd("CastEnum", new ConvertFunctionDefinition(f2.FunctionName, f2.FunctionBody, false));
+
+                            var sType = FullTypeName(sourceEnumSymbol, sourceTypeName);
+                            var code = $"source.{source.Name} != null ? source.{source.Name}.Select(CastEnum<{sType},{ltype}>).ToList() : new List<{ltype}>()";
+                            var exp = SyntaxFactory.ParseExpression(code);
+                            return exp;
+                        }
                     }
                     else
                     {

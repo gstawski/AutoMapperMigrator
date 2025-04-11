@@ -84,37 +84,6 @@ public class ClassDefinition
         Namespace = fullNamespace;
     }
 
-    public int SimilarityScore(Dictionary<string, PropertyDefinition> properties, bool useOnlyPublicSetProperties)
-    {
-        int count = 0;
-
-        if (useOnlyPublicSetProperties)
-        {
-            foreach (var p in PropertiesAndTypes.Values)
-            {
-                if (p.IsPublicSet)
-                {
-                    if (properties.ContainsKey(p.Name))
-                    {
-                        count++;
-                    }
-                }
-            }
-        }
-        else
-        {
-            foreach (var p in PropertiesAndTypes.Values)
-            {
-                if (properties.ContainsKey(p.Name))
-                {
-                    count++;
-                }
-            }
-        }
-
-        return count;
-    }
-
     public string TypeName { get; }
 
     public string ShortTypeName { get; }
