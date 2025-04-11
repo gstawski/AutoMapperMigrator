@@ -1,0 +1,566 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AplicationConfiguration>
+    <OutputDirectoryPath>Mappers</OutputDirectoryPath>
+    <OutputFileName>Mapper.cs</OutputFileName>
+    <MapperClassName>Mapper</MapperClassName>
+    <MapFunctionNamesPrefix>Map</MapFunctionNamesPrefix>
+    <UseFullNameSpaces>true</UseFullNameSpaces>
+    <DefaultNameSpaces>
+        <DefaultNameSpace>System</DefaultNameSpace>
+        <DefaultNameSpace>System.Globalization</DefaultNameSpace>
+        <DefaultNameSpace>System.Collections.Generic</DefaultNameSpace>
+        <DefaultNameSpace>System.Linq</DefaultNameSpace>
+        <DefaultNameSpace>System.Text</DefaultNameSpace>
+    </DefaultNameSpaces>
+    <Collections>
+        <TypeName>List</TypeName>
+        <TypeName>IList</TypeName>
+        <TypeName>IEnumerable</TypeName>
+        <TypeName>ICollection</TypeName>
+    </Collections>
+    <ConvertFunctions>
+        <Function>
+            <FunctionName>CastEnum</FunctionName>
+            <InputTypeName>TSource</InputTypeName>
+            <OutputTypeName>TDestination</OutputTypeName>
+            <FunctionNameIsKey>1</FunctionNameIsKey>
+            <FunctionBody>
+                private static TDestination CastEnum&lt;TSource, TDestination&gt;(TSource sourceValue) where TSource : Enum where TDestination : Enum
+                {
+                    int sourceIntValue = Convert.ToInt32(sourceValue);
+
+                    if (Enum.IsDefined(typeof(TDestination), sourceIntValue))
+                    {
+                        return (TDestination)Enum.ToObject(typeof(TDestination), sourceValue);
+                    }
+
+                    return default;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>CastEnumNullable</FunctionName>
+            <InputTypeName>TSource</InputTypeName>
+            <OutputTypeName>TDestination</OutputTypeName>
+            <FunctionNameIsKey>1</FunctionNameIsKey>
+            <FunctionBody>
+                private static TDestination? CastEnumNullable&lt;TSource, TDestination&gt;(TSource? sourceValue)
+                where TSource : struct, Enum
+                where TDestination : struct, Enum
+                {
+                    if (!sourceValue.HasValue)
+                    {
+                        return null;
+                    }
+
+                    int sourceIntValue = Convert.ToInt32(sourceValue.Value);
+                    if (Enum.IsDefined(typeof(TDestination), sourceIntValue))
+                    {
+                        return (TDestination)Enum.ToObject(typeof(TDestination), sourceIntValue);
+                    }
+
+                    return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToBool</FunctionName>
+            <InputTypeName>bool?</InputTypeName>
+            <OutputTypeName>bool</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static bool ToBool(bool? value)
+                {
+                    if (value.HasValue)
+                    {
+                        return value.Value;
+                    }
+                    return false;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToLong</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>long</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static long ToLong(string value)
+                {
+                return Convert.ToInt64(value);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToInt</FunctionName>
+            <InputTypeName>int?</InputTypeName>
+            <OutputTypeName>int</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static int ToInt(int? value)
+                {
+                    if (value.HasValue)
+                    {
+                        return value.Value;
+                    }
+                    return 0;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToIntFromLong</FunctionName>
+            <InputTypeName>long</InputTypeName>
+            <OutputTypeName>int</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static int ToIntFromLong(long value)
+                {
+                return (int)value;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToLongFromInt</FunctionName>
+            <InputTypeName>int</InputTypeName>
+            <OutputTypeName>long</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static long ToLongFromInt(int value)
+                {
+                return (long)value;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToIntFromLong</FunctionName>
+            <InputTypeName>long?</InputTypeName>
+            <OutputTypeName>int?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static int? ToIntFromLong(long? value)
+                {
+                if (value.HasValue)
+                {
+                return (int)value.Value;
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToLongFromInt</FunctionName>
+            <InputTypeName>int?</InputTypeName>
+            <OutputTypeName>long?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static long? ToLongFromInt(int? value)
+                {
+                if (value.HasValue)
+                {
+                return (long)value.Value;
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToNullableLong</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>long?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static long? ToNullableLong(string value)
+                {
+                if (string.IsNullOrEmpty(value))
+                {
+                return null;
+                }
+
+                if (long.TryParse(value, out var result))
+                {
+                return result;
+                }
+
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToInt</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>int</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static int ToInt(string value)
+                {
+                return Convert.ToInt32(value);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToNullableInt</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>int?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static int? ToNullableInt(string value)
+                {
+                if (string.IsNullOrEmpty(value))
+                {
+                return null;
+                }
+
+                if (int.TryParse(value, out var result))
+                {
+                return result;
+                }
+
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDecimal</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>decimal</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static decimal ToDecimal(string value)
+                {
+                return Convert.ToDecimal(value);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDouble</FunctionName>
+            <InputTypeName>double?</InputTypeName>
+            <OutputTypeName>double</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static double ToDouble(double? value)
+                {
+                    if (value.HasValue)
+                    {
+                        return value.Value;
+                    }
+                    return 0;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDouble</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>double</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static double ToDouble(string value)
+                {
+                return Convert.ToDouble(value);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToNullableDouble</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>double?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static double? ToNullableDouble(string value)
+                {
+                if (string.IsNullOrEmpty(value))
+                {
+                return null;
+                }
+
+                if (double.TryParse(value, out var result))
+                {
+                return result;
+                }
+
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToTimeSpan</FunctionName>
+            <InputTypeName>DateTimeOffset</InputTypeName>
+            <OutputTypeName>TimeSpan</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static TimeSpan ToTimeSpan(DateTimeOffset value)
+                {
+                return value.TimeOfDay;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToTimeSpan</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>TimeSpan</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static TimeSpan ToTimeSpan(string value)
+                {
+                return TimeSpan.Parse(value);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToTimeSpanNullable</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>TimeSpan?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static TimeSpan? ToTimeSpanNullable(string value)
+                {
+                if (!string.IsNullOrEmpty(value))
+                {
+                return TimeSpan.Parse(value);
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDateTime</FunctionName>
+            <InputTypeName>DateTime?</InputTypeName>
+            <OutputTypeName>DateTime</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static DateTime ToDateTime(DateTime? value)
+                {
+                    if (value.HasValue)
+                    {
+                        return value.Value;
+                    }
+
+                    return DateTime.MinValue;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDateTime</FunctionName>
+            <InputTypeName>string</InputTypeName>
+            <OutputTypeName>DateTime</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static DateTime ToDateTime(string value)
+                {
+                if (string.IsNullOrEmpty(value))
+                {
+                return default;
+                }
+
+                if (DateTime.TryParse(value, out var result))
+                {
+                return result;
+                }
+
+                return default;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDateTime</FunctionName>
+            <InputTypeName>DateTimeOffset?</InputTypeName>
+            <OutputTypeName>DateTime</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static DateTime ToDateTime(DateTimeOffset? value)
+                {
+                if (value.HasValue)
+                {
+                return value.Value.LocalDateTime;
+                }
+
+                return default;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDateTime</FunctionName>
+            <InputTypeName>DateTimeOffset</InputTypeName>
+            <OutputTypeName>DateTime</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static DateTime ToDateTime(DateTimeOffset value)
+                {
+                return value.LocalDateTime;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDateTime</FunctionName>
+            <InputTypeName>System.DateTimeOffset?</InputTypeName>
+            <OutputTypeName>DateTime</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static DateTime ToDateTime(System.DateTimeOffset? value)
+                {
+                if (value.HasValue)
+                {
+                return value.Value.LocalDateTime;
+                }
+
+                return default;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDateTimeNullable</FunctionName>
+            <InputTypeName>DateTimeOffset?</InputTypeName>
+            <OutputTypeName>DateTime?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static DateTime? ToDateTimeNullable(DateTimeOffset? value)
+                {
+                if (value.HasValue)
+                {
+                return value.Value.LocalDateTime;
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>int</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(int value)
+                {
+                return value.ToString();
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>int?</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(int? value)
+                {
+                if (value.HasValue)
+                {
+                return value.Value.ToString();
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>long</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(long value)
+                {
+                return value.ToString();
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>long?</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(long? value)
+                {
+                if (value.HasValue)
+                {
+                return value.Value.ToString();
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>double</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(double value)
+                {
+                return value.ToString(CultureInfo.InvariantCulture);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>double?</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(double? value)
+                {
+                if (value.HasValue)
+                {
+                return value.Value.ToString(CultureInfo.InvariantCulture);
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>decimal</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(decimal value)
+                {
+                return value.ToString(CultureInfo.InvariantCulture);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>decimal?</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(decimal? value)
+                {
+                if (value.HasValue)
+                {
+                return value.Value.ToString(CultureInfo.InvariantCulture);
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>char?</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(char? value)
+                {
+                if (value.HasValue)
+                {
+                return new string([value.Value]);
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>char</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(char value)
+                {
+                return new string([value]);
+                }
+            </FunctionBody>
+        </Function>
+    </ConvertFunctions>
+</AplicationConfiguration>
