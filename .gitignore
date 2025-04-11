@@ -1,6 +1,6 @@
 .vs/
 .idea/
 .git/
-/bin/**
-/obj/**
+bin/
+obj/
 **.user
