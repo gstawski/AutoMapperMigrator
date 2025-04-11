@@ -10,7 +10,7 @@ Path to the project to analyze is taken from the command line argument.
 If types on the source and destination are the same, it will be a simple assignment of the value.
 If the types are different, it will be a conversion function call.
 If the conversion function is not found in configuration, it will be a Unknown function called.
-If a lot of properties assignment is done by convert function is is a sign of potentially problems with app.
+If a lot of properties assignment is done by convert function it is a sign of potentially problems with app.
 
 # How to use
 AutoMapperMigratorConsole.exe c:\path\to\project\to\analyze\solution.sln
