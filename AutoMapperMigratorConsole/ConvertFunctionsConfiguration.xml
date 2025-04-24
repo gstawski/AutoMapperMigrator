@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AplicationConfiguration>
     <OutputDirectoryPath>Mappers</OutputDirectoryPath>
-    <OutputFileName>Mapper.cs</OutputFileName>
-    <MapperClassName>Mapper</MapperClassName>
+    <OutputFileName>ObjectMapper.cs</OutputFileName>
+    <MapperClassName>ObjectMapper</MapperClassName>
     <MapFunctionNamesPrefix>Map</MapFunctionNamesPrefix>
     <UseFullNameSpaces>true</UseFullNameSpaces>
     <DefaultNameSpaces>
