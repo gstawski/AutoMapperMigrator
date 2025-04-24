@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AutoMapperMigratorConsole.Model;
 using Microsoft.CodeAnalysis.CSharp;
@@ -9,6 +10,7 @@ namespace AutoMapperMigratorConsole.WalkerCollectors;
 public class AutoMapperMappingsWalker : CSharpSyntaxWalker
 {
     private readonly List<AutoMapperFieldInfo> _mappings = new();
+    private readonly Dictionary<string, byte> _uniquePropertyCheck = new();
 
     public ICollection<AutoMapperFieldInfo> Mappings => _mappings;
 
@@ -31,13 +33,18 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                 {
                     if (sourceExpression?.Body is MemberAccessExpressionSyntax sourceMae)
                     {
-                        _mappings.Add(
-                            new AutoMapperFieldInfo
-                            {
-                                SourceField = sourceMae.Name.Identifier.Text,
-                                DestinationField = destMae.Name.Identifier.Text,
-                            }
-                        );
+                        var mapping = new AutoMapperFieldInfo
+                        {
+                            SourceField = sourceMae.Name.Identifier.Text,
+                            DestinationField = destMae.Name.Identifier.Text
+                        };
+
+                        if (UniquenessCheck(mapping))
+                        {
+                            return;
+                        }
+
+                        _mappings.Add(mapping);
                     }
                     if (sourceExpression?.Body is ConditionalExpressionSyntax conditionalExpressionSyntax)
                     {
@@ -73,13 +80,18 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                     if (destLambda?.Body is MemberAccessExpressionSyntax destMae2 &&
                         sourceLambda?.Body is MemberAccessExpressionSyntax sourceMae2)
                     {
-                        _mappings.Add(
-                            new AutoMapperFieldInfo
-                            {
-                                SourceField = sourceMae2.Name.Identifier.Text,
-                                DestinationField = destMae2.Name.Identifier.Text
-                            }
-                        );
+                        var mapping = new AutoMapperFieldInfo
+                        {
+                            SourceField = sourceMae2.Name.Identifier.Text,
+                            DestinationField = destMae2.Name.Identifier.Text
+                        };
+
+                        if (UniquenessCheck(mapping))
+                        {
+                            return;
+                        }
+
+                        _mappings.Add(mapping);
                     }
                 }
             }
@@ -100,13 +112,16 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                 if (destExpression?.Body is MemberAccessExpressionSyntax destMae1 &&
                     sourceExpression?.Body is MemberAccessExpressionSyntax sourceMae1)
                 {
-                    _mappings.Add(
-                        new AutoMapperFieldInfo
-                        {
-                            SourceField = sourceMae1.Name.Identifier.Text,
-                            DestinationField = destMae1.Name.Identifier.Text
-                        }
-                    );
+                    var mapping = new AutoMapperFieldInfo
+                    {
+                        SourceField = sourceMae1.Name.Identifier.Text,
+                        DestinationField = destMae1.Name.Identifier.Text
+                    };
+                    if (UniquenessCheck(mapping))
+                    {
+                        return;
+                    }
+                    _mappings.Add(mapping);
                 }
 
                 var destLambda = args[0].Expression as SimpleLambdaExpressionSyntax;
@@ -117,13 +132,18 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                     if (destLambda?.Body is MemberAccessExpressionSyntax destMae2 &&
                         sourceLambda?.Body is MemberAccessExpressionSyntax sourceMae2)
                     {
-                        _mappings.Add(
-                            new AutoMapperFieldInfo
-                            {
-                                SourceField = sourceMae2.Name.Identifier.Text,
-                                DestinationField = destMae2.Name.Identifier.Text
-                            }
-                        );
+                        var mapping = new AutoMapperFieldInfo
+                        {
+                            SourceField = sourceMae2.Name.Identifier.Text,
+                            DestinationField = destMae2.Name.Identifier.Text
+                        };
+
+                        if (UniquenessCheck(mapping))
+                        {
+                            return;
+                        }
+
+                        _mappings.Add(mapping);
                     }
                     else if (destLambda?.Body is MemberAccessExpressionSyntax destMae3 &&
                              sourceLambda?.Body is InvocationExpressionSyntax sourceMae3 &&
@@ -143,5 +163,16 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
         }
 
         base.VisitInvocationExpression(node);
+    }
+
+    private bool UniquenessCheck(AutoMapperFieldInfo mapping)
+    {
+        if (!_uniquePropertyCheck.TryAdd($"{mapping.SourceField}-{mapping.DestinationField}", 0))
+        {
+            Console.WriteLine($"Duplicate mapping found: {mapping.SourceField} - {mapping.DestinationField}");
+            return true;
+        }
+
+        return false;
     }
 }
