@@ -117,6 +117,7 @@ namespace AutoMapperMigratorConsole.Model
             {
                 SourceType = x.SourceType,
                 DestinationType = x.DestinationType,
+                ReverseMap = x.ReverseMap,
                 FieldsMap = x.FieldsMappings,
                 SyntaxNode = x.Node
             }).ToList();

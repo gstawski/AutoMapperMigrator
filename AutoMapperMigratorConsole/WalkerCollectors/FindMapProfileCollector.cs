@@ -8,7 +8,7 @@ namespace AutoMapperMigratorConsole.WalkerCollectors;
 
 public class FindMapProfileCollector : CSharpSyntaxWalker
 {
-    public List<(string SourceType, string DestinationType, ICollection<AutoMapperFieldInfo> FieldsMappings, ExpressionStatementSyntax Node)> MappingClassNamePairs { get; } = new ();
+    public List<(string SourceType, string DestinationType, bool ReverseMap, ICollection<AutoMapperFieldInfo> FieldsMappings, ExpressionStatementSyntax Node)> MappingClassNamePairs { get; } = new ();
     private bool _isProfileClass;
 
     // Check class declaration for Profile base class
@@ -65,7 +65,8 @@ public class FindMapProfileCollector : CSharpSyntaxWalker
 
                     string sourceType = typeArguments[0].ToString();
                     string destinationType = typeArguments[1].ToString();
-                    MappingClassNamePairs.Add((sourceType, destinationType, w.Mappings, parent));
+                    bool reverseMap = parent.ToString().Contains("ReverseMap()");
+                    MappingClassNamePairs.Add((sourceType, destinationType, reverseMap, w.Mappings, parent));
                 }
             }
         }

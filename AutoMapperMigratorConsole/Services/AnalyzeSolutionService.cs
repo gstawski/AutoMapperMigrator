@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapperMigratorConsole.Interfaces;
@@ -209,6 +210,28 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
                     };
 
                     classMaps.Add(clasMap);
+
+                    if (mapping.ReverseMap)
+                    {
+                        var reverseFields = mapping.FieldsMap
+                            .Where(x=>x.SyntaxNode == null)
+                            .Select(x => new AutoMapperFieldInfo
+                        {
+                            SourceField = x.DestinationField,
+                            DestinationField = x.SourceField,
+                            Ignore = x.Ignore,
+                            SyntaxNode = x.SyntaxNode
+                        }).ToList();
+
+                        var clasMapReverse = new ClassMapDefinition
+                        {
+                            SourceClass = destinationType,
+                            DestinationClass = sourceType,
+                            FieldsMap = reverseFields
+                        };
+
+                        classMaps.Add(clasMapReverse);
+                    }
                 }
             }
 

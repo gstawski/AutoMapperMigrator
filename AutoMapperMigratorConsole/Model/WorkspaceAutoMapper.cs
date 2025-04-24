@@ -21,6 +21,8 @@ public class AutoMapperCreateMap
 
     public string DestinationType { get; set; }
 
+    public bool ReverseMap { get; set; }
+
     public ICollection<AutoMapperFieldInfo> FieldsMap { get; set; }
 
     public ExpressionStatementSyntax SyntaxNode { get; set; }
