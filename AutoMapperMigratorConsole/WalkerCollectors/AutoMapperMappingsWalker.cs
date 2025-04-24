@@ -38,9 +38,8 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                                 DestinationField = destMae.Name.Identifier.Text,
                             }
                         );
-                        return;
                     }
-                    else if (sourceExpression?.Body is ConditionalExpressionSyntax conditionalExpressionSyntax)
+                    if (sourceExpression?.Body is ConditionalExpressionSyntax conditionalExpressionSyntax)
                     {
                         _mappings.Add(
                             new AutoMapperFieldInfo
@@ -51,7 +50,18 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                                 SyntaxNode = conditionalExpressionSyntax
                             }
                         );
-                        return;
+                    }
+                    if (sourceExpression?.Body is InvocationExpressionSyntax expressionSyntax)
+                    {
+                        _mappings.Add(
+                            new AutoMapperFieldInfo
+                            {
+                                SourceField = string.Empty,
+                                DestinationField = destMae.Name.Identifier.Text,
+                                Ignore = false,
+                                SyntaxNode = expressionSyntax
+                            }
+                        );
                     }
                 }
 
@@ -97,7 +107,6 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                             DestinationField = destMae1.Name.Identifier.Text
                         }
                     );
-                    return;
                 }
 
                 var destLambda = args[0].Expression as SimpleLambdaExpressionSyntax;

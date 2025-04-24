@@ -536,6 +536,24 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                         SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, newCode as ExpressionSyntax));
                     statements.Add(propertyCopy);
                 }
+                else if (code is InvocationExpressionSyntax invocation)
+                {
+                    FindMemberAccessExpression memberAccessExpression = new FindMemberAccessExpression();
+                    memberAccessExpression.Visit(invocation.ArgumentList);
+
+                    IdentifierReplacer replacer = new IdentifierReplacer(memberAccessExpression.MemberName, "source");
+                    var newCode = replacer.Visit(invocation);
+
+                    var leftArgument = SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        SyntaxFactory.IdentifierName("desc"),
+                        SyntaxFactory.IdentifierName(desc.Value.Name));
+
+
+                    var propertyCopy = SyntaxFactory.ExpressionStatement(
+                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, newCode as ExpressionSyntax));
+                    statements.Add(propertyCopy);
+                }
             }
             else if (sourceProperties.TryGetValue(desc.Key, out var source))
             {
