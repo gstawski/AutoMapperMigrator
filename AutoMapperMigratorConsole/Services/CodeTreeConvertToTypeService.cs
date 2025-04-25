@@ -201,6 +201,20 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
             }
         }
 
+        if (destinationType == "int" && IsEnumType(sourceSymbol))
+        {
+            var code = $"(int)source.{source.Name}";
+            var exp = SyntaxFactory.ParseExpression(code);
+            return exp;
+        }
+
+        if (IsEnumType(destinationSymbol) && sourceType == "int")
+        {
+            var code = $"({destinationType})source.{source.Name}";
+            var exp = SyntaxFactory.ParseExpression(code);
+            return exp;
+        }
+
         if (destinationType == "string" || destinationType == "string?")
         {
             if (IsEnumType(sourceSymbol))

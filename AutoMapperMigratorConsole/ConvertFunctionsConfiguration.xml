@@ -80,6 +80,22 @@
             </FunctionBody>
         </Function>
         <Function>
+            <FunctionName>ToBoolFromInt</FunctionName>
+            <InputTypeName>int?</InputTypeName>
+            <OutputTypeName>bool?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static bool? ToBoolFromInt(int? value)
+                {
+                if (value.HasValue)
+                {
+                return value.Value >= 1;
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
             <FunctionName>ToLong</FunctionName>
             <InputTypeName>string</InputTypeName>
             <OutputTypeName>long</OutputTypeName>
@@ -104,6 +120,22 @@
                         return value.Value;
                     }
                     return 0;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToIntFromBool</FunctionName>
+            <InputTypeName>bool?</InputTypeName>
+            <OutputTypeName>int?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static int? ToIntFromBool(bool? value)
+                {
+                if (value.HasValue)
+                {
+                return value.Value ? 1 : 0;
+                }
+                return null;
                 }
             </FunctionBody>
         </Function>
@@ -302,6 +334,22 @@
                 private static TimeSpan ToTimeSpan(string value)
                 {
                 return TimeSpan.Parse(value);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToTimeSpan</FunctionName>
+            <InputTypeName>int?</InputTypeName>
+            <OutputTypeName>TimeSpan</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static TimeSpan ToTimeSpan(int? value)
+                {
+                    if (value.HasValue)
+                    {
+                        return TimeSpan.FromMinutes(value.Value);
+                    }
+                    return TimeSpan.Zero;
                 }
             </FunctionBody>
         </Function>
