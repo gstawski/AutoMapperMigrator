@@ -108,28 +108,6 @@
             </FunctionBody>
         </Function>
         <Function>
-            <FunctionName>ToLongNullable</FunctionName>
-            <InputTypeName>string</InputTypeName>
-            <OutputTypeName>long?</OutputTypeName>
-            <FunctionNameIsKey>0</FunctionNameIsKey>
-            <FunctionBody>
-                private static long? ToLongNullable(string value)
-                {
-                if (string.IsNullOrEmpty(value))
-                {
-                return null;
-                }
-
-                if (long.TryParse(value, out var result))
-                {
-                return result;
-                }
-
-                return null;
-                }
-            </FunctionBody>
-        </Function>
-        <Function>
             <FunctionName>ToInt</FunctionName>
             <InputTypeName>int?</InputTypeName>
             <OutputTypeName>int</OutputTypeName>
