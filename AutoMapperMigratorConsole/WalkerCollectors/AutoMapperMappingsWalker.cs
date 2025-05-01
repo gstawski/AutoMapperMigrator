@@ -39,12 +39,10 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                             DestinationField = destMae.Name.Identifier.Text
                         };
 
-                        if (UniquenessCheck(mapping))
+                        if (!UniquenessCheck(mapping))
                         {
-                            return;
+                            _mappings.Add(mapping);
                         }
-
-                        _mappings.Add(mapping);
                     }
                     else if (sourceExpression?.Body is ConditionalExpressionSyntax conditionalExpressionSyntax)
                     {
@@ -86,12 +84,10 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                             DestinationField = destMae2.Name.Identifier.Text
                         };
 
-                        if (UniquenessCheck(mapping))
+                        if (!UniquenessCheck(mapping))
                         {
-                            return;
+                            _mappings.Add(mapping);
                         }
-
-                        _mappings.Add(mapping);
                     }
                     else if (destLambda.Body is MemberAccessExpressionSyntax destMae3 &&
                              sourceLambda.Body is InvocationExpressionSyntax sourceMae3)
@@ -108,12 +104,10 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                                     SyntaxNode = simpleLambda
                                 };
 
-                                if (UniquenessCheck(mapping))
+                                if (!UniquenessCheck(mapping))
                                 {
-                                    return;
+                                    _mappings.Add(mapping);
                                 }
-
-                                _mappings.Add(mapping);
                             }
                         }
                     }
@@ -141,11 +135,10 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                         SourceField = sourceMae1.Name.Identifier.Text,
                         DestinationField = destMae1.Name.Identifier.Text
                     };
-                    if (UniquenessCheck(mapping))
+                    if (!UniquenessCheck(mapping))
                     {
-                        return;
+                        _mappings.Add(mapping);
                     }
-                    _mappings.Add(mapping);
                 }
 
                 var destLambda = args[0].Expression as SimpleLambdaExpressionSyntax;
@@ -162,25 +155,56 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                             DestinationField = destMae2.Name.Identifier.Text
                         };
 
-                        if (UniquenessCheck(mapping))
+                        if (!UniquenessCheck(mapping))
                         {
-                            return;
+                            _mappings.Add(mapping);
                         }
-
-                        _mappings.Add(mapping);
                     }
-                    else if (destLambda?.Body is MemberAccessExpressionSyntax destMae3 &&
-                             sourceLambda?.Body is InvocationExpressionSyntax sourceMae3 &&
+                    else if (destLambda.Body is MemberAccessExpressionSyntax destMae3 &&
+                             sourceLambda.Body is InvocationExpressionSyntax sourceMae3 &&
                              (sourceMae3.Expression as MemberAccessExpressionSyntax)?.Name.ToString() == "Ignore")
                     {
-                        _mappings.Add(
-                            new AutoMapperFieldInfo
-                            {
-                                SourceField = string.Empty,
-                                DestinationField = destMae3.Name.Identifier.Text,
-                                Ignore = true
-                            }
-                        );
+                        var mapping = new AutoMapperFieldInfo
+                        {
+                            SourceField = string.Empty,
+                            DestinationField = destMae3.Name.Identifier.Text,
+                            Ignore = true
+                        };
+
+                        if (!UniquenessCheck(mapping))
+                        {
+                            _mappings.Add(mapping);
+                        }
+                    }
+                }
+            }
+        }
+        else if (node.Expression is MemberAccessExpressionSyntax mae3 &&
+                 mae3.Name.Identifier.Text == "AfterMap")
+        {
+            var args = node.ArgumentList.Arguments;
+            if (args.Count == 1)
+            {
+                var lambda = args[0].Expression as ParenthesizedLambdaExpressionSyntax;
+                if (lambda != null)
+                {
+                    var body = lambda.Body.ToString();
+                    var parms = lambda.ParameterList;
+
+                    if (parms.Parameters.Count == 2)
+                    {
+                        var p1 = parms.Parameters[0].Identifier.Text + ".";
+                        var p2 = parms.Parameters[1].Identifier.Text + ".";
+
+                        body = body.Replace(p1, "source.");
+                        body = body.Replace(p2, "desc.");
+
+                        var mapping = new AutoMapperFieldInfo
+                        {
+                            Code = body,
+                            AfterMap = true
+                        };
+                        _mappings.Add(mapping);
                     }
                 }
             }
@@ -191,12 +215,18 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
 
     private bool UniquenessCheck(AutoMapperFieldInfo mapping)
     {
-        if (!_uniquePropertyCheck.TryAdd($"{mapping.SourceField}-{mapping.DestinationField}", 0))
+        if (_uniquePropertyCheck.ContainsKey($"{mapping.SourceField}-{mapping.DestinationField}"))
         {
-            Console.WriteLine($"Duplicate mapping found: {mapping.SourceField} - {mapping.DestinationField}");
             return true;
         }
 
+        if (_uniquePropertyCheck.ContainsKey($"X-{mapping.DestinationField}"))
+        {
+            return true;
+        }
+
+        _uniquePropertyCheck.TryAdd($"{mapping.SourceField}-{mapping.DestinationField}", 0);
+        _uniquePropertyCheck.TryAdd($"X-{mapping.DestinationField}", 0);
         return false;
     }
 }

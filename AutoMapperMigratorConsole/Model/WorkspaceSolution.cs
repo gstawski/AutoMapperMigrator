@@ -44,7 +44,7 @@ namespace AutoMapperMigratorConsole.Model
                     var key = item.ToString();
                     if (!allSymbols.TryAdd(key, item))
                     {
-                        Console.Out.WriteLineAsync($"Duplicate: {key}");
+                        await Console.Out.WriteLineAsync($"Duplicate: {key}");
                     }
                 }
             }

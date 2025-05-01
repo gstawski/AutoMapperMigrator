@@ -12,7 +12,11 @@ public class AutoMapperFieldInfo
 
     public bool Ignore { get; set; }
 
+    public bool AfterMap { get; set; }
+
     public ExpressionSyntax SyntaxNode { get; set; }
+
+    public string Code { get; set; }
 }
 
 public class AutoMapperCreateMap

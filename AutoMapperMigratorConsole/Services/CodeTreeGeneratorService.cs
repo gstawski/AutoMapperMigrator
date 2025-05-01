@@ -217,11 +217,11 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
             .ToDictionary(x => x.DestinationField.ToLower(), _ => 0);
 
         var definedMap = classMap.FieldsMap
-            .Where(x => !string.IsNullOrEmpty(x.SourceField))
+            .Where(x => !string.IsNullOrEmpty(x.SourceField) && !x.AfterMap)
             .ToDictionary(x => x.DestinationField.ToLower(), y => y.SourceField.ToLower());
 
         var codeMap = classMap.FieldsMap
-            .Where(x => x.SyntaxNode != null)
+            .Where(x => x.SyntaxNode != null && !x.AfterMap)
             .ToDictionary(x => x.DestinationField.ToLower(), y => y.SyntaxNode);
 
         foreach (var desc in descProperties)
@@ -324,6 +324,15 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                     var commentedLine = SyntaxFactory.Comment($"// desc.{desc.Value.Name} = null;");
                     statements.Add(SyntaxFactory.ParseStatement(string.Empty).WithLeadingTrivia(commentedLine));
                 }
+            }
+        }
+
+        foreach (var afterMap in classMap.FieldsMap.Where(x => x.AfterMap))
+        {
+            if (!string.IsNullOrEmpty(afterMap.Code))
+            {
+                var exp = SyntaxFactory.ParseStatement(afterMap.Code);
+                statements.Add(exp);
             }
         }
     }

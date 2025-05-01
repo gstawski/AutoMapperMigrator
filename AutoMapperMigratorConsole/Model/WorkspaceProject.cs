@@ -72,17 +72,16 @@ namespace AutoMapperMigratorConsole.Model
             var project = await getProject(new ProgressBarProjectLoadStatus());
             var compilation = await project.GetCompilationAsync();
 
-            // Let's register mscorlib
             compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
 
             var output = Path.Combine(Path.GetDirectoryName(project.FilePath), "bin");
 
             if (Directory.Exists(output))
             {
-                var files = Directory.GetFiles(output, "*.dll").ToList(); // You can also look for *.exe files
+                var files = Directory.GetFiles(output, "*.dll").ToList();
                 foreach (var f in files)
                 {
-                    Console.Out.WriteLine($"AddReference {f}");
+                    await Console.Out.WriteLineAsync($"AddReference {f}");
                     compilation = compilation.AddReferences(MetadataReference.CreateFromFile(f));
                 }
             }
