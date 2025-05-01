@@ -46,7 +46,7 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
 
                         _mappings.Add(mapping);
                     }
-                    if (sourceExpression?.Body is ConditionalExpressionSyntax conditionalExpressionSyntax)
+                    else if (sourceExpression?.Body is ConditionalExpressionSyntax conditionalExpressionSyntax)
                     {
                         _mappings.Add(
                             new AutoMapperFieldInfo
@@ -58,7 +58,7 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                             }
                         );
                     }
-                    if (sourceExpression?.Body is InvocationExpressionSyntax expressionSyntax)
+                    else if (sourceExpression?.Body is InvocationExpressionSyntax expressionSyntax)
                     {
                         _mappings.Add(
                             new AutoMapperFieldInfo
@@ -77,8 +77,8 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
 
                 if (destLambda != null && sourceLambda != null)
                 {
-                    if (destLambda?.Body is MemberAccessExpressionSyntax destMae2 &&
-                        sourceLambda?.Body is MemberAccessExpressionSyntax sourceMae2)
+                    if (destLambda.Body is MemberAccessExpressionSyntax destMae2 &&
+                        sourceLambda.Body is MemberAccessExpressionSyntax sourceMae2)
                     {
                         var mapping = new AutoMapperFieldInfo
                         {
@@ -92,6 +92,30 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                         }
 
                         _mappings.Add(mapping);
+                    }
+                    else if (destLambda.Body is MemberAccessExpressionSyntax destMae3 &&
+                             sourceLambda.Body is InvocationExpressionSyntax sourceMae3)
+                    {
+                        if (sourceMae3.ArgumentList.Arguments.Count == 1)
+                        {
+                            var simpleLambda = sourceMae3.ArgumentList.Arguments[0].Expression as SimpleLambdaExpressionSyntax;
+
+                            if (simpleLambda != null)
+                            {
+                                var mapping = new AutoMapperFieldInfo
+                                {
+                                    DestinationField = destMae3.Name.Identifier.Text,
+                                    SyntaxNode = simpleLambda
+                                };
+
+                                if (UniquenessCheck(mapping))
+                                {
+                                    return;
+                                }
+
+                                _mappings.Add(mapping);
+                            }
+                        }
                     }
                 }
             }
@@ -129,8 +153,8 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
 
                 if (destLambda != null && sourceLambda != null)
                 {
-                    if (destLambda?.Body is MemberAccessExpressionSyntax destMae2 &&
-                        sourceLambda?.Body is MemberAccessExpressionSyntax sourceMae2)
+                    if (destLambda.Body is MemberAccessExpressionSyntax destMae2 &&
+                        sourceLambda.Body is MemberAccessExpressionSyntax sourceMae2)
                     {
                         var mapping = new AutoMapperFieldInfo
                         {

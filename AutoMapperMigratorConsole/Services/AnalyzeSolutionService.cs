@@ -187,13 +187,13 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
 
         var profiles = await GetMapperProfiles(solution);
 
-        var solutionContext = new SolutionContext(models);
-
         foreach (var profile in profiles)
         {
             var space = profile.Project.DefaultNamespace;
 
-            List<ClassMapDefinition> classMaps = new List<ClassMapDefinition>();
+            var solutionContext = new SolutionContext(models, space);
+
+            List<ClassMapDefinition> classMaps = solutionContext.ClassMaps;
 
             foreach (var mapping in profile.Mappings)
             {
@@ -235,11 +235,10 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
                 }
             }
 
-            var mapperClass = _codeTreeGeneratorService.CreateMapper(solutionContext, space, classMaps);
+            var mapperClass = _codeTreeGeneratorService.CreateMapper(solutionContext);
 
             var code = mapperClass.NormalizeWhitespace().ToFullString();
             Console.WriteLine(code);
-
 
             if (!string.IsNullOrEmpty(_configuration.OutputPath))
             {

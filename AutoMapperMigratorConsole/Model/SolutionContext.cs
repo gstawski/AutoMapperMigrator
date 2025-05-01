@@ -7,8 +7,13 @@ public class SolutionContext
 {
     private readonly Dictionary<string, ISymbol> _models;
 
-    public SolutionContext(Dictionary<string,ISymbol> models)
+    public string DefaultNamespace { get; }
+
+    public List<ClassMapDefinition> ClassMaps { get; } = new();
+
+    public SolutionContext(Dictionary<string,ISymbol> models, string defaultNamespace)
     {
+        DefaultNamespace = defaultNamespace;
         _models = models;
     }
 

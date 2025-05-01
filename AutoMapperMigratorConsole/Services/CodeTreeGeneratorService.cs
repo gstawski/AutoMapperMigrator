@@ -21,295 +21,6 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
         _codeTreeConvertToTypeService = codeTreeConvertToTypeService;
     }
 
-    private static MethodDeclarationSyntax ToStringBody(TypeSyntax typeKeyword, string methodName)
-    {
-        // Method declaration setup
-        var stringKeyword = SyntaxFactory.Token(SyntaxKind.StringKeyword);
-        var privateStaticModifiers = SyntaxFactory.TokenList(
-            new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
-                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-            });
-
-        // Method declaration
-        var methodDeclaration = SyntaxFactory.MethodDeclaration(
-                SyntaxFactory.PredefinedType(stringKeyword),
-                SyntaxFactory.Identifier(methodName))
-            .WithModifiers(privateStaticModifiers);
-
-        // Parameter list setup
-        var parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
-            .WithType(typeKeyword);
-        var parameterList = SyntaxFactory.ParameterList(
-            SyntaxFactory.SingletonSeparatedList(parameter));
-
-        // Convert.ToString invocation
-        var toStringMethodAccess = SyntaxFactory.MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            SyntaxFactory.IdentifierName("Convert"),
-            SyntaxFactory.IdentifierName("ToString"));
-        var convertToStringInvocation = SyntaxFactory.InvocationExpression(toStringMethodAccess)
-            .WithArgumentList(SyntaxFactory.ArgumentList(
-                SyntaxFactory.SingletonSeparatedList(
-                    SyntaxFactory.Argument(SyntaxFactory.IdentifierName("value")))));
-
-        // Return statement
-        var returnStatement = SyntaxFactory.ReturnStatement(convertToStringInvocation);
-
-        // Method body block
-        var methodBodyBlock = SyntaxFactory.Block(
-            SyntaxFactory.SingletonList<StatementSyntax>(returnStatement));
-
-        // Combine all parts into the complete method declaration
-        var methodWithBody = methodDeclaration.WithParameterList(parameterList).WithBody(methodBodyBlock);
-        return methodWithBody;
-    }
-
-    internal static MethodDeclarationSyntax ToStringBody(SyntaxKind sourceKind, string methodName)
-    {
-        var typeKeyword = SyntaxFactory.Token(sourceKind);
-        return ToStringBody(SyntaxFactory.PredefinedType(typeKeyword), methodName);
-    }
-
-    internal static MethodDeclarationSyntax ToStringNullableBody(SyntaxKind typeKind, string methodName)
-    {
-        // Method declaration setup
-        var stringKeyword = SyntaxFactory.Token(SyntaxKind.StringKeyword);
-        var typeKeyword = SyntaxFactory.Token(typeKind);
-        var privateStaticModifiers = SyntaxFactory.TokenList(
-            new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
-                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-            });
-
-        // Method declaration
-        var methodDeclaration = SyntaxFactory.MethodDeclaration(
-                SyntaxFactory.PredefinedType(stringKeyword),
-                SyntaxFactory.Identifier(methodName))
-            .WithModifiers(privateStaticModifiers);
-
-        // Parameter list setup
-        var parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
-            .WithType(SyntaxFactory.NullableType(SyntaxFactory.PredefinedType(typeKeyword)));
-
-        var parameterList = SyntaxFactory.ParameterList(SyntaxFactory.SingletonSeparatedList(parameter));
-
-        // value.HasValue check
-        var hasValueMemberAccess = SyntaxFactory.MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            SyntaxFactory.IdentifierName("value"),
-            SyntaxFactory.IdentifierName("HasValue"));
-
-        // Convert.ToString invocation for value.Value
-        var valueMemberAccess = SyntaxFactory.MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            SyntaxFactory.IdentifierName("value"),
-            SyntaxFactory.IdentifierName("Value"));
-
-        var toStringMethodAccess = SyntaxFactory.MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            SyntaxFactory.IdentifierName("Convert"),
-            SyntaxFactory.IdentifierName("ToString"));
-
-        var convertToStringInvocation = SyntaxFactory.InvocationExpression(toStringMethodAccess)
-            .WithArgumentList(SyntaxFactory.ArgumentList(
-                SyntaxFactory.SingletonSeparatedList(
-                    SyntaxFactory.Argument(valueMemberAccess))));
-        var returnConvertToStringStatement = SyntaxFactory.ReturnStatement(convertToStringInvocation);
-
-        // If block for value.HasValue
-        var ifBlock = SyntaxFactory.Block(
-            SyntaxFactory.SingletonList<StatementSyntax>(returnConvertToStringStatement));
-
-        // Null return statement
-        var nullReturnStatement = SyntaxFactory.ReturnStatement(
-            SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression));
-
-        // Method body block
-        var methodBodyBlock = SyntaxFactory.Block(
-            SyntaxFactory.IfStatement(hasValueMemberAccess, ifBlock),
-            nullReturnStatement);
-
-        // Combine all parts into the complete method declaration
-        var methodWithBody = methodDeclaration.WithParameterList(parameterList).WithBody(methodBodyBlock);
-
-        return methodWithBody;
-    }
-
-    internal static MethodDeclarationSyntax ToTypeMethodBody(SyntaxKind typeKind, SyntaxKind sourceKind, string methodName)
-    {
-        // Method declaration setup
-        var typeKeyword = SyntaxFactory.Token(typeKind);
-        var stringKeyword = SyntaxFactory.Token(sourceKind);
-        var privateStaticModifiers = SyntaxFactory.TokenList(
-            new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
-                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-            });
-
-        // Method declaration
-        var methodDeclaration = SyntaxFactory.MethodDeclaration(
-                SyntaxFactory.PredefinedType(typeKeyword),
-                SyntaxFactory.Identifier(methodName))
-            .WithModifiers(privateStaticModifiers);
-
-        // Parameter list setup
-        var parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
-            .WithType(SyntaxFactory.PredefinedType(stringKeyword));
-
-        var parameterList = SyntaxFactory.ParameterList(
-            SyntaxFactory.SingletonSeparatedList(parameter));
-
-        // String.IsNullOrEmpty check
-        var isNullOrEmptyMethodAccess = SyntaxFactory.MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            SyntaxFactory.PredefinedType(stringKeyword),
-            SyntaxFactory.IdentifierName("IsNullOrEmpty"));
-
-        var isNullOrEmptyInvocation = SyntaxFactory.InvocationExpression(isNullOrEmptyMethodAccess)
-            .WithArgumentList(SyntaxFactory.ArgumentList(
-                SyntaxFactory.SingletonSeparatedList(
-                    SyntaxFactory.Argument(SyntaxFactory.IdentifierName("value")))));
-
-        var zeroReturnBlock = SyntaxFactory.Block(
-            SyntaxFactory.SingletonList<StatementSyntax>(
-                SyntaxFactory.ReturnStatement(
-                    SyntaxFactory.LiteralExpression(
-                        SyntaxKind.NumericLiteralExpression,
-                        SyntaxFactory.Literal(0)))));
-
-        var isNullOrEmptyCheckIfStatement = SyntaxFactory.IfStatement(isNullOrEmptyInvocation, zeroReturnBlock);
-
-        // int.TryParse check
-        var tryParseMethodAccess = SyntaxFactory.MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            SyntaxFactory.PredefinedType(typeKeyword),
-            SyntaxFactory.IdentifierName("TryParse"));
-
-        var outVarResult = SyntaxFactory.DeclarationExpression(
-                SyntaxFactory.IdentifierName(SyntaxFactory.Identifier(SyntaxFactory.TriviaList(), SyntaxKind.VarKeyword, "var", "var", SyntaxFactory.TriviaList())),
-                SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier("result")))
-            ;
-        var tryParseInvocation = SyntaxFactory.InvocationExpression(tryParseMethodAccess)
-            .WithArgumentList(SyntaxFactory.ArgumentList(
-                SyntaxFactory.SeparatedList<ArgumentSyntax>(
-                    new SyntaxNodeOrToken[]
-                    {
-                        SyntaxFactory.Argument(SyntaxFactory.IdentifierName("value")),
-                        SyntaxFactory.Token(SyntaxKind.CommaToken),
-                        SyntaxFactory.Argument(outVarResult).WithRefOrOutKeyword(SyntaxFactory.Token(SyntaxKind.OutKeyword))
-                    })));
-
-        var resultReturnBlock = SyntaxFactory.Block(
-            SyntaxFactory.SingletonList<StatementSyntax>(
-                SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName("result"))));
-        var tryParseCheckIfStatement = SyntaxFactory.IfStatement(tryParseInvocation, resultReturnBlock);
-
-        // Final return statement
-        var finalReturnStatement = SyntaxFactory.ReturnStatement(
-            SyntaxFactory.LiteralExpression(
-                SyntaxKind.NumericLiteralExpression,
-                SyntaxFactory.Literal(0)));
-
-        // Method body block
-        var methodBodyBlock = SyntaxFactory.Block(
-            isNullOrEmptyCheckIfStatement,
-            tryParseCheckIfStatement,
-            finalReturnStatement);
-
-        // Combine all parts into the complete method declaration
-        var methodWithBody = methodDeclaration.WithParameterList(parameterList).WithBody(methodBodyBlock);
-
-        return methodWithBody;
-    }
-
-    internal static MethodDeclarationSyntax ToNullableTypeMethodBody(SyntaxKind typeKind, string methodName)
-    {
-        // Method declaration setup
-        var typKeyWord = SyntaxFactory.Token(typeKind);
-        var stringKeyword = SyntaxFactory.Token(SyntaxKind.StringKeyword);
-        var privateStaticModifiers = SyntaxFactory.TokenList(
-            new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
-                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-            });
-
-        // Method declaration
-        var methodDeclaration = SyntaxFactory.MethodDeclaration(
-                SyntaxFactory.NullableType(
-                    SyntaxFactory.PredefinedType(typKeyWord)),
-                SyntaxFactory.Identifier(methodName))
-            .WithModifiers(privateStaticModifiers);
-
-        // Parameter list setup
-        var parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
-            .WithType(SyntaxFactory.PredefinedType(stringKeyword));
-
-        var parameterList = SyntaxFactory.ParameterList(
-            SyntaxFactory.SingletonSeparatedList(parameter));
-
-        // String.IsNullOrEmpty check
-        var isNullOrEmptyMethodAccess = SyntaxFactory.MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            SyntaxFactory.PredefinedType(stringKeyword),
-            SyntaxFactory.IdentifierName("IsNullOrEmpty"));
-
-        var isNullOrEmptyInvocation = SyntaxFactory.InvocationExpression(isNullOrEmptyMethodAccess)
-            .WithArgumentList(SyntaxFactory.ArgumentList(
-                SyntaxFactory.SingletonSeparatedList(
-                    SyntaxFactory.Argument(SyntaxFactory.IdentifierName("value")))));
-
-        var nullReturnBlock = SyntaxFactory.Block(
-            SyntaxFactory.SingletonList<StatementSyntax>(
-                SyntaxFactory.ReturnStatement(
-                    SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression))));
-        var isNullOrEmptyCheckIfStatement = SyntaxFactory.IfStatement(isNullOrEmptyInvocation, nullReturnBlock);
-
-        // TryParse check
-        var tryParseMethodAccess = SyntaxFactory.MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            SyntaxFactory.PredefinedType(typKeyWord),
-            SyntaxFactory.IdentifierName("TryParse"));
-
-        var outVarResult = SyntaxFactory.DeclarationExpression(
-            SyntaxFactory.IdentifierName(SyntaxFactory.Identifier(SyntaxFactory.TriviaList(), SyntaxKind.VarKeyword, "var", "var", SyntaxFactory.TriviaList())),
-            SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier("result")));
-
-        var tryParseInvocation = SyntaxFactory.InvocationExpression(tryParseMethodAccess)
-            .WithArgumentList(SyntaxFactory.ArgumentList(
-                SyntaxFactory.SeparatedList<ArgumentSyntax>(
-                    new SyntaxNodeOrToken[]
-                    {
-                        SyntaxFactory.Argument(SyntaxFactory.IdentifierName("value")),
-                        SyntaxFactory.Token(SyntaxKind.CommaToken),
-                        SyntaxFactory.Argument(outVarResult).WithRefOrOutKeyword(SyntaxFactory.Token(SyntaxKind.OutKeyword))
-                    })));
-
-        var resultReturnBlock = SyntaxFactory.Block(
-            SyntaxFactory.SingletonList<StatementSyntax>(
-                SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName("result"))));
-        var tryParseCheckIfStatement = SyntaxFactory.IfStatement(tryParseInvocation, resultReturnBlock);
-
-        // Final return statement
-        var finalReturnStatement = SyntaxFactory.ReturnStatement(
-            SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression));
-
-        // Method body block
-        var methodBodyBlock = SyntaxFactory.Block(
-            isNullOrEmptyCheckIfStatement,
-            tryParseCheckIfStatement,
-            finalReturnStatement);
-
-        // Combine all parts into the complete method declaration
-        var methodWithBody = methodDeclaration.WithParameterList(parameterList).WithBody(methodBodyBlock);
-
-        return methodWithBody;
-    }
-
     private static ParameterSyntax SourceParameter(AppConfiguration configuration, ClassDefinition classDef, string identifier)
     {
         if (configuration.UseFullNameSpace)
@@ -439,6 +150,48 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
         return variableDeclaration;
     }
 
+    private static bool SimpleLambdaMapToSelf(SimpleLambdaExpressionSyntax simpleLambda)
+    {
+        var parameter = simpleLambda.Parameter.Identifier.Text;
+        var expression = simpleLambda.Body.ToString();
+
+        if (parameter == expression)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private static MemberAccessExpressionSyntax DestinationMember(string memberName)
+    {
+        return SyntaxFactory.MemberAccessExpression(
+            SyntaxKind.SimpleMemberAccessExpression,
+            SyntaxFactory.IdentifierName("desc"),
+            SyntaxFactory.IdentifierName(memberName));
+    }
+
+    private static MemberAccessExpressionSyntax SourceMember(string memberName)
+    {
+        return SyntaxFactory.MemberAccessExpression(
+            SyntaxKind.SimpleMemberAccessExpression,
+            SyntaxFactory.IdentifierName("source"),
+            SyntaxFactory.IdentifierName(memberName));
+    }
+
+    private static void AssignProperties(List<StatementSyntax> statements, string left, string right)
+    {
+        var propertyCopy = SyntaxFactory.ExpressionStatement(
+            SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, DestinationMember(left), SourceMember(right)));
+        statements.Add(propertyCopy);
+    }
+
+    private static void AssignProperties(List<StatementSyntax> statements, MemberAccessExpressionSyntax left, ExpressionSyntax right)
+    {
+        var propertyCopy = SyntaxFactory.ExpressionStatement(
+            SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, left, right));
+        statements.Add(propertyCopy);
+    }
+
     private void CopyByProperties(SolutionContext solutionContext, List<StatementSyntax> statements, ClassMapDefinition classMap, Dictionary<string, ConvertFunctionDefinition> usedTypes)
     {
         var descClassName = classMap.DestinationClass.TypeName;
@@ -478,42 +231,26 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                 continue;
             }
 
-            if (definedMap.Count > 0 && definedMap.TryGetValue(desc.Key, out var dp) && sourceProperties.TryGetValue(dp, out var source0))
+            if (definedMap.Count > 0
+                && definedMap.TryGetValue(desc.Key, out var dp)
+                && sourceProperties.TryGetValue(dp, out var source0))
             {
-                var leftArgument = SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    SyntaxFactory.IdentifierName("desc"),
-                    SyntaxFactory.IdentifierName(desc.Value.Name));
-
-                var rightArgument = SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    SyntaxFactory.IdentifierName("source"),
-                    SyntaxFactory.IdentifierName(source0.Name));
-
                 if (desc.Value.Type == source0.Type && source0.IsSimpleType)
                 {
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, rightArgument));
-                    statements.Add(propertyCopy);
+                    AssignProperties(statements, desc.Value.Name, source0.Name);
                 }
                 else if (desc.Value.RawType == source0.RawType && source0.IsSimpleType)
                 {
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, rightArgument));
-                    statements.Add(propertyCopy);
+                    AssignProperties(statements, desc.Value.Name, source0.Name);
                 }
                 else if (!source0.IsNullable && source0.RawType + "?" == desc.Value.RawType && source0.IsSimpleType)
                 {
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, rightArgument));
-                    statements.Add(propertyCopy);
+                    AssignProperties(statements, desc.Value.Name, source0.Name);
                 }
                 else
                 {
-                    var convert = _codeTreeConvertToTypeService.ConvertToType(solutionContext, desc.Value, source0, rightArgument, usedTypes);
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, convert));
-                    statements.Add(propertyCopy);
+                    var convert = _codeTreeConvertToTypeService.ConvertToType(solutionContext, desc.Value, source0, SourceMember(source0.Name), usedTypes);
+                    AssignProperties(statements, DestinationMember(desc.Value.Name), convert);
                 }
             }
             else if (codeMap.Count > 0 && codeMap.TryGetValue(desc.Key, out var code))
@@ -526,15 +263,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                     IdentifierReplacer replacer = new IdentifierReplacer(memberAccessExpression.MemberName, "source");
                     var newCode = replacer.Visit(condCode);
 
-                    var leftArgument = SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        SyntaxFactory.IdentifierName("desc"),
-                        SyntaxFactory.IdentifierName(desc.Value.Name));
-
-
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, newCode as ExpressionSyntax));
-                    statements.Add(propertyCopy);
+                    AssignProperties(statements, DestinationMember(desc.Value.Name), newCode as ExpressionSyntax);
                 }
                 else if (code is InvocationExpressionSyntax invocation)
                 {
@@ -544,53 +273,35 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                     IdentifierReplacer replacer = new IdentifierReplacer(memberAccessExpression.MemberName, "source");
                     var newCode = replacer.Visit(invocation);
 
-                    var leftArgument = SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        SyntaxFactory.IdentifierName("desc"),
-                        SyntaxFactory.IdentifierName(desc.Value.Name));
-
-
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, newCode as ExpressionSyntax));
-                    statements.Add(propertyCopy);
+                    AssignProperties(statements, DestinationMember(desc.Value.Name), newCode as ExpressionSyntax);
+                }
+                else if (code is SimpleLambdaExpressionSyntax simpleLambda)
+                {
+                    if (SimpleLambdaMapToSelf(simpleLambda))
+                    {
+                        var functionCall = _codeTreeConvertToTypeService.CallMapFunction(desc.Value);
+                        AssignProperties(statements, DestinationMember(desc.Value.Name), functionCall);
+                    }
                 }
             }
             else if (sourceProperties.TryGetValue(desc.Key, out var source))
             {
-                var leftArgument = SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    SyntaxFactory.IdentifierName("desc"),
-                    SyntaxFactory.IdentifierName(desc.Value.Name));
-
-                var rightArgument = SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    SyntaxFactory.IdentifierName("source"),
-                    SyntaxFactory.IdentifierName(source.Name));
-
                 if (desc.Value.Type == source.Type && source.IsSimpleType)
                 {
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, rightArgument));
-                    statements.Add(propertyCopy);
+                    AssignProperties(statements, desc.Value.Name, source.Name);
                 }
                 else if (desc.Value.RawType == source.RawType && source.IsSimpleType)
                 {
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, rightArgument));
-                    statements.Add(propertyCopy);
+                    AssignProperties(statements, desc.Value.Name, source.Name);
                 }
                 else if (!source.IsNullable && source.RawType + "?" == desc.Value.RawType && source.IsSimpleType)
                 {
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, rightArgument));
-                    statements.Add(propertyCopy);
+                    AssignProperties(statements, desc.Value.Name, source.Name);
                 }
                 else
                 {
-                    var convert = _codeTreeConvertToTypeService.ConvertToType(solutionContext, desc.Value, source, rightArgument, usedTypes);
-                    var propertyCopy = SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, leftArgument, convert));
-                    statements.Add(propertyCopy);
+                    var convert = _codeTreeConvertToTypeService.ConvertToType(solutionContext, desc.Value, source, SourceMember(source.Name), usedTypes);
+                    AssignProperties(statements, DestinationMember(desc.Value.Name), convert);
                 }
             }
             else if (definedMap.Count == 0)
@@ -647,14 +358,14 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
         return methodDeclaration;
     }
 
-    public CompilationUnitSyntax CreateMapper(SolutionContext solutionContext, string space, List<ClassMapDefinition> classMaps)
+    public CompilationUnitSyntax CreateMapper(SolutionContext solutionContext)
     {
-        var usings = CreateUsings(_appConfiguration, classMaps);
+        var usings = CreateUsings(_appConfiguration, solutionContext.ClassMaps);
 
         List<MemberDeclarationSyntax> methods = new List<MemberDeclarationSyntax>();
 
         var nameSpaceDeclaration = SyntaxFactory.FileScopedNamespaceDeclaration(
-                SyntaxFactory.ParseName(space))
+                SyntaxFactory.ParseName(solutionContext.DefaultNamespace))
             .WithSemicolonToken(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.SemicolonToken, SyntaxFactory.TriviaList(SyntaxFactory.CarriageReturnLineFeed)))
             .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed);
 
@@ -664,7 +375,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
 
         List<MemberDeclarationSyntax> mappers = new List<MemberDeclarationSyntax>();
 
-        foreach (var classMap in classMaps)
+        foreach (var classMap in solutionContext.ClassMaps)
         {
             var mapper = GetMapperDeclarationSyntax(solutionContext, classMap, usedTypes);
             mappers.Add(mapper);

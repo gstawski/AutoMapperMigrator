@@ -12,7 +12,7 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 {
     private readonly AppConfiguration _appConfiguration;
 
-    private static Dictionary<string, byte> _primitiveTypes = new Dictionary<string, byte>
+    private static readonly Dictionary<string, byte> _primitiveTypes = new()
     {
         { "int", 1 },
         { "long", 2 },
@@ -146,7 +146,21 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
                 );
     }
 
-    public ExpressionSyntax ConvertToType(SolutionContext solutionContext, PropertyDefinition destination, PropertyDefinition source, ExpressionSyntax expression, Dictionary<string, ConvertFunctionDefinition> usedTypes)
+    public ExpressionSyntax CallMapFunction(PropertyDefinition destination)
+    {
+        var function = _appConfiguration.MapFunctionNamesPrefix + destination.Type;
+
+        var exp = SyntaxFactory.ParseExpression("source");
+
+        return CallFunction(function, exp);
+    }
+
+    public ExpressionSyntax ConvertToType(
+        SolutionContext solutionContext,
+        PropertyDefinition destination,
+        PropertyDefinition source,
+        ExpressionSyntax expression,
+        Dictionary<string, ConvertFunctionDefinition> usedTypes)
     {
         var destinationType = destination.Type;
         var sourceType = source.Type;
@@ -237,7 +251,7 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
         if (solutionContext.IsSolutionType(destinationType))
         {
-            var function = "Map" + destinationType;
+            var function = _appConfiguration.MapFunctionNamesPrefix + destinationType;
             return CallFunction(function, expression);
         }
 
