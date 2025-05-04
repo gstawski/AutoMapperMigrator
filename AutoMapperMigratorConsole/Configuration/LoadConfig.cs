@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Serialization;
 using AutoMapperMigratorConsole.Model;
 
@@ -76,6 +77,10 @@ public static class LoadConfig
                 }
             }
 
+            var classPostfixes = !string.IsNullOrEmpty(result.SearchClassPostfixes)
+                ? result.SearchClassPostfixes.Split([','], StringSplitOptions.RemoveEmptyEntries).ToList()
+                : new List<string>();
+
             return new AppConfiguration
             {
                 UseFullNameSpace = result.UseFullNameSpaces,
@@ -84,6 +89,7 @@ public static class LoadConfig
                 OutputFileName = result.OutputFileName,
                 MapperClassName = result.MapperClassName,
                 DefaultNameSpaces = result.DefaultNameSpace?.NameSpaces,
+                SearchClassPostfixes = classPostfixes,
                 ConvertFunctions = convertFunctions,
                 CollectionTypes = collectionTypes,
             };

@@ -5,6 +5,7 @@
     <MapperClassName>ObjectMapper</MapperClassName>
     <MapFunctionNamesPrefix>Map</MapFunctionNamesPrefix>
     <UseFullNameSpaces>true</UseFullNameSpaces>
+    <SearchClassPostfixes>Request,Response,DTO,Adapter</SearchClassPostfixes>
     <DefaultNameSpaces>
         <DefaultNameSpace>System</DefaultNameSpace>
         <DefaultNameSpace>System.Globalization</DefaultNameSpace>

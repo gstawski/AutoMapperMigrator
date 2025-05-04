@@ -28,6 +28,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
             return SyntaxFactory.Parameter(SyntaxFactory.Identifier(identifier))
                 .WithType(SyntaxFactory.ParseTypeName(classDef.TypeNameWithNamespace));
         }
+
         return SyntaxFactory.Parameter(SyntaxFactory.Identifier(identifier))
             .WithType(SyntaxFactory.ParseTypeName(classDef.TypeName));
     }
@@ -38,6 +39,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
         {
             return SyntaxFactory.IdentifierName(classDef.TypeNameWithNamespace);
         }
+
         return SyntaxFactory.IdentifierName(classDef.TypeName);
     }
 
@@ -100,15 +102,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
 
                 var argument = SyntaxFactory.Argument(leftArgument);
 
-                if (desc.Value.Type == source.Type && source.IsSimpleType)
-                {
-                    argumentSyntaxes.Add((++order, argument));
-                }
-                else if (desc.Value.RawType == source.RawType && source.IsSimpleType)
-                {
-                    argumentSyntaxes.Add((++order, argument));
-                }
-                else if (!source.IsNullable && source.RawType + "?" == desc.Value.RawType && source.IsSimpleType)
+                if (TypesAreEqual(desc.Value, source))
                 {
                     argumentSyntaxes.Add((++order, argument));
                 }
@@ -127,7 +121,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
 
         var variableDeclaration = SyntaxFactory.LocalDeclarationStatement(SyntaxFactory.VariableDeclaration(
             SyntaxFactory.IdentifierName("var"),
-            SyntaxFactory.SingletonSeparatedList<VariableDeclaratorSyntax>(
+            SyntaxFactory.SingletonSeparatedList(
                 SyntaxFactory.VariableDeclarator(
                         SyntaxFactory.Identifier("desc")
                     )
@@ -136,7 +130,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                             SyntaxFactory.ObjectCreationExpression(
                                 SyntaxFactory.IdentifierName(descClassName),
                                 SyntaxFactory.ArgumentList(
-                                    SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                                    SyntaxFactory.SeparatedList(
                                         argumentSyntaxes.OrderBy(x => x.Order).Select(x => x.Syntax).ToArray()
                                     )
                                 ),
@@ -159,6 +153,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
         {
             return true;
         }
+
         return false;
     }
 
@@ -192,6 +187,26 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
         statements.Add(propertyCopy);
     }
 
+    private static void AddDestinationDeclaration(List<StatementSyntax> statements, string descClassName)
+    {
+        statements.Add(SyntaxFactory.LocalDeclarationStatement(
+            SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName("var"))
+                .AddVariables(SyntaxFactory.VariableDeclarator("desc")
+                    .WithInitializer(SyntaxFactory.EqualsValueClause(
+                        SyntaxFactory.ObjectCreationExpression(SyntaxFactory.IdentifierName(descClassName))
+                            .WithArgumentList(SyntaxFactory.ArgumentList()))))));
+    }
+
+    private static ExpressionSyntax ReplaceMemberName(SyntaxNode sourceNode, SyntaxNode descNode)
+    {
+        FindMemberAccessExpression memberAccessExpression = new FindMemberAccessExpression();
+        memberAccessExpression.Visit(sourceNode);
+
+        IdentifierReplacer replacer = new IdentifierReplacer(memberAccessExpression.MemberName, "source");
+        var newCode = replacer.Visit(descNode);
+        return newCode as ExpressionSyntax;
+    }
+
     private void CopyByProperties(SolutionContext solutionContext, List<StatementSyntax> statements, ClassMapDefinition classMap, Dictionary<string, ConvertFunctionDefinition> usedTypes)
     {
         var descClassName = classMap.DestinationClass.TypeName;
@@ -204,13 +219,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
         var descProperties = classMap.DestinationClass.PropertiesAndTypes;
         var sourceProperties = classMap.SourceClass.PropertiesAndTypes;
 
-        statements.Add(SyntaxFactory.LocalDeclarationStatement(
-            SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName("var"))
-                .AddVariables(SyntaxFactory.VariableDeclarator("desc")
-                    .WithInitializer(SyntaxFactory.EqualsValueClause(
-                        SyntaxFactory.ObjectCreationExpression(SyntaxFactory.IdentifierName(descClassName))
-                            .WithArgumentList(SyntaxFactory.ArgumentList()))))));
-
+        AddDestinationDeclaration(statements, descClassName);
 
         var ignoreMap = classMap.FieldsMap
             .Where(x => x.Ignore)
@@ -218,7 +227,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
 
         var definedMap = classMap.FieldsMap
             .Where(x => !string.IsNullOrEmpty(x.SourceField) && !x.AfterMap)
-            .ToDictionary(x => x.DestinationField.ToLower(), y => y.SourceField.ToLower());
+            .ToDictionary(x => x.DestinationField.ToLower());
 
         var codeMap = classMap.FieldsMap
             .Where(x => x.SyntaxNode != null && !x.AfterMap)
@@ -233,19 +242,16 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
 
             if (definedMap.Count > 0
                 && definedMap.TryGetValue(desc.Key, out var dp)
-                && sourceProperties.TryGetValue(dp, out var source0))
+                && sourceProperties.TryGetValue(dp.SourceField.ToLower(), out var source0))
             {
-                if (desc.Value.Type == source0.Type && source0.IsSimpleType)
+                if (TypesAreEqual(desc.Value, source0))
                 {
                     AssignProperties(statements, desc.Value.Name, source0.Name);
                 }
-                else if (desc.Value.RawType == source0.RawType && source0.IsSimpleType)
+                else if (!dp.AfterMap && !string.IsNullOrEmpty(dp.Code))
                 {
-                    AssignProperties(statements, desc.Value.Name, source0.Name);
-                }
-                else if (!source0.IsNullable && source0.RawType + "?" == desc.Value.RawType && source0.IsSimpleType)
-                {
-                    AssignProperties(statements, desc.Value.Name, source0.Name);
+                    var functionCall = _codeTreeConvertToTypeService.CallMapFunction(desc.Value);
+                    AssignProperties(statements, DestinationMember(desc.Value.Name), functionCall);
                 }
                 else
                 {
@@ -255,25 +261,13 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
             }
             else if (codeMap.Count > 0 && codeMap.TryGetValue(desc.Key, out var code))
             {
-                if (code is ConditionalExpressionSyntax condCode)
+                if (code is ConditionalExpressionSyntax)
                 {
-                    FindMemberAccessExpression memberAccessExpression = new FindMemberAccessExpression();
-                    memberAccessExpression.Visit(condCode);
-
-                    IdentifierReplacer replacer = new IdentifierReplacer(memberAccessExpression.MemberName, "source");
-                    var newCode = replacer.Visit(condCode);
-
-                    AssignProperties(statements, DestinationMember(desc.Value.Name), newCode as ExpressionSyntax);
+                    AssignProperties(statements, DestinationMember(desc.Value.Name), ReplaceMemberName(code, code));
                 }
                 else if (code is InvocationExpressionSyntax invocation)
                 {
-                    FindMemberAccessExpression memberAccessExpression = new FindMemberAccessExpression();
-                    memberAccessExpression.Visit(invocation.ArgumentList);
-
-                    IdentifierReplacer replacer = new IdentifierReplacer(memberAccessExpression.MemberName, "source");
-                    var newCode = replacer.Visit(invocation);
-
-                    AssignProperties(statements, DestinationMember(desc.Value.Name), newCode as ExpressionSyntax);
+                    AssignProperties(statements, DestinationMember(desc.Value.Name), ReplaceMemberName(invocation.ArgumentList, invocation));
                 }
                 else if (code is SimpleLambdaExpressionSyntax simpleLambda)
                 {
@@ -286,15 +280,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
             }
             else if (sourceProperties.TryGetValue(desc.Key, out var source))
             {
-                if (desc.Value.Type == source.Type && source.IsSimpleType)
-                {
-                    AssignProperties(statements, desc.Value.Name, source.Name);
-                }
-                else if (desc.Value.RawType == source.RawType && source.IsSimpleType)
-                {
-                    AssignProperties(statements, desc.Value.Name, source.Name);
-                }
-                else if (!source.IsNullable && source.RawType + "?" == desc.Value.RawType && source.IsSimpleType)
+                if (TypesAreEqual(desc.Value, source))
                 {
                     AssignProperties(statements, desc.Value.Name, source.Name);
                 }
@@ -335,6 +321,31 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                 statements.Add(exp);
             }
         }
+    }
+
+    private static bool TypesAreEqual(PropertyDefinition desc, PropertyDefinition source)
+    {
+        if (!source.IsSimpleType)
+        {
+            return false;
+        }
+
+        if (desc.Type == source.Type)
+        {
+            return true;
+        }
+
+        if (desc.RawType == source.RawType)
+        {
+            return true;
+        }
+
+        if (!source.IsNullable && source.RawType + "?" == desc.RawType)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private MethodDeclarationSyntax GetMapperDeclarationSyntax(SolutionContext solutionContext, ClassMapDefinition classMap, Dictionary<string, ConvertFunctionDefinition> usedTypes)

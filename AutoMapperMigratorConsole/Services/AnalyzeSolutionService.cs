@@ -30,25 +30,6 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         return profiles;
     }
 
-    private static ISymbol FindClassSymbol(Dictionary<string, ISymbol> models, string className)
-    {
-        if (models.TryGetValue(className, out ISymbol model))
-        {
-            return model;
-        }
-
-        var nameWithDot = "." + className;
-        foreach (var m in models)
-        {
-            if (m.Key.EndsWith(nameWithDot))
-            {
-                return m.Value;
-            }
-        }
-
-        return null;
-    }
-
     private static ClassDeclarationSyntax GetClassDeclarationSyntax(ISymbol symbol)
     {
         if (symbol is not ITypeSymbol typeSymbol || typeSymbol.TypeKind != TypeKind.Class)
@@ -74,13 +55,13 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         return null;
     }
 
-    private static ClassDefinition GetClassDefinition(Dictionary<string, ISymbol> models, string className)
+    private static ClassDefinition GetClassDefinition(SolutionContext solutionContext, string className)
     {
         var properties = new Dictionary<string, PropertyDefinition>();
 
         var constructors = new List<ConstructorDefinition>();
 
-        var symbolSource = FindClassSymbol(models, className);
+        var symbolSource = solutionContext.FindClassSymbol(className);
 
         if (symbolSource != null)
         {
@@ -197,8 +178,8 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
 
             foreach (var mapping in profile.Mappings)
             {
-                var sourceType = GetClassDefinition(models, mapping.SourceType);
-                var destinationType = GetClassDefinition(models, mapping.DestinationType);
+                var sourceType = GetClassDefinition(solutionContext, mapping.SourceType);
+                var destinationType = GetClassDefinition(solutionContext, mapping.DestinationType);
 
                 if (sourceType.HasProperties && destinationType.HasProperties)
                 {
@@ -214,14 +195,15 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
                     if (mapping.ReverseMap)
                     {
                         var reverseFields = mapping.FieldsMap
-                            .Where(x=>x.SyntaxNode == null)
+                            .Where(x => x.SyntaxNode == null)
                             .Select(x => new AutoMapperFieldInfo
-                        {
-                            SourceField = x.DestinationField,
-                            DestinationField = x.SourceField,
-                            Ignore = x.Ignore,
-                            SyntaxNode = x.SyntaxNode
-                        }).ToList();
+                            {
+                                SourceField = x.DestinationField,
+                                DestinationField = x.SourceField,
+                                Ignore = x.Ignore,
+                                SyntaxNode = x.SyntaxNode
+                            })
+                            .ToList();
 
                         var clasMapReverse = new ClassMapDefinition
                         {
@@ -256,5 +238,158 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
                 }
             }
         }
+    }
+
+    private static void CheckComplexTypesInPropertyList(SolutionContext solutionContext, AppConfiguration appConfiguration, ClassDefinition destinationType, List<AutoMapperFieldInfo> fieldsMap)
+    {
+        foreach (var prp in destinationType.PropertiesAndTypes.Values)
+        {
+            if (!prp.IsSimpleType)
+            {
+                if (prp.Type.Contains("<"))
+                {
+                    var split = prp.Type.Split(new[] { '<', '>', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (split.Length == 2)
+                    {
+                        var t = split[1];
+                        if (solutionContext.TryGetSolutionSymbol(t) != null)
+                        {
+                            TryMatchSourceType(solutionContext, appConfiguration, prp, t, fieldsMap);
+                        }
+                    }
+                }
+                else
+                {
+                    if (solutionContext.TryGetSolutionSymbol(prp.Type) != null)
+                    {
+                        TryMatchSourceType(solutionContext, appConfiguration, prp, prp.Type, fieldsMap);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void TryMatchSourceType(SolutionContext solutionContext, AppConfiguration appConfiguration, PropertyDefinition propertyDefinition, string destinationType, List<AutoMapperFieldInfo> fieldsMap)
+    {
+        var postfixes = appConfiguration.SearchClassPostfixes;
+
+        foreach (var postfix in postfixes)
+        {
+            if (destinationType.Contains(postfix, StringComparison.InvariantCultureIgnoreCase))
+            {
+                var ntype = destinationType.Replace(postfix, string.Empty, StringComparison.InvariantCultureIgnoreCase);
+                var sourceType = solutionContext.TryGetSolutionSymbol(ntype);
+                if (sourceType != null)
+                {
+                    fieldsMap.Add(new AutoMapperFieldInfo
+                    {
+                        AfterMap = false,
+                        DestinationField = propertyDefinition.Name,
+                        Code = $"{appConfiguration.MapFunctionNamesPrefix}{destinationType}(source);",
+                    });
+
+                    CreateMapDefinition(solutionContext, appConfiguration, ntype, destinationType);
+                    return;
+                }
+            }
+        }
+
+        foreach (var postfix in postfixes)
+        {
+            var ntype = destinationType + postfix;
+            var sourceType = solutionContext.TryGetSolutionSymbol(ntype);
+            if (sourceType != null)
+            {
+                fieldsMap.Add(new AutoMapperFieldInfo
+                {
+                    AfterMap = false,
+                    DestinationField = propertyDefinition.Name,
+                    Code = $"{appConfiguration.MapFunctionNamesPrefix}{destinationType}(source);",
+                });
+
+                CreateMapDefinition(solutionContext, appConfiguration, ntype, destinationType);
+                return;
+            }
+        }
+    }
+
+    private static void CreateMapDefinition(SolutionContext solutionContext, AppConfiguration appConfiguration, string sourceClass, string destinationClass)
+    {
+        var sourceType = GetClassDefinition(solutionContext, sourceClass);
+        var destinationType = GetClassDefinition(solutionContext, destinationClass);
+
+        List<AutoMapperFieldInfo> fieldsMap = new List<AutoMapperFieldInfo>();
+
+        CheckComplexTypesInPropertyList(solutionContext, appConfiguration, destinationType, fieldsMap);
+
+        foreach (var prp in destinationType.PropertiesAndTypes)
+        {
+            if (sourceType.PropertiesAndTypes.TryGetValue(prp.Key, out var value))
+            {
+                fieldsMap.Add(new AutoMapperFieldInfo
+                {
+                    SourceField = value.Name,
+                    DestinationField = prp.Value.Name,
+                });
+            }
+            else
+            {
+                foreach (var prp1 in sourceType.PropertiesAndTypes.Values)
+                {
+                    if (!prp1.IsSimpleType && prp1.Type == prp.Value.Type)
+                    {
+                        fieldsMap.Add(new AutoMapperFieldInfo
+                        {
+                            SourceField = prp1.Name,
+                            DestinationField = prp.Value.Name,
+                        });
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (fieldsMap.Count > 0)
+        {
+            var clasMap = new ClassMapDefinition
+            {
+                SourceClass = sourceType,
+                DestinationClass = destinationType,
+                FieldsMap = fieldsMap
+            };
+
+            solutionContext.ClassMaps.Add(clasMap);
+        }
+    }
+
+    public async Task AnalyzeForOneMap(string solutionPath, string sourceClass, string destinationClass)
+    {
+        var solution = await WorkspaceSolution.Load(solutionPath);
+
+        var models = await solution.AllProjectSymbols();
+
+        var solutionContext = new SolutionContext(models, "Test");
+
+        var sourceSymbol = solutionContext.TryGetSolutionSymbol(sourceClass);
+
+        if (sourceSymbol == null)
+        {
+            throw new Exception("Source symbol not found");
+        }
+
+        var destinationSymbol = solutionContext.TryGetSolutionSymbol(destinationClass);
+
+        if (destinationSymbol == null)
+        {
+            throw new Exception("Destination symbol not found");
+        }
+
+        CreateMapDefinition(solutionContext, _configuration, sourceClass, destinationClass);
+
+        var mapperClass = _codeTreeGeneratorService.CreateMapper(solutionContext);
+
+        var code = mapperClass.NormalizeWhitespace().ToFullString();
+        Console.WriteLine(code);
     }
 }

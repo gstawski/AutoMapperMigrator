@@ -58,4 +58,23 @@ public class SolutionContext
 
         return null;
     }
+
+    public ISymbol FindClassSymbol(string className)
+    {
+        if (_models.TryGetValue(className, out ISymbol model))
+        {
+            return model;
+        }
+
+        var nameWithDot = "." + className;
+        foreach (var m in _models)
+        {
+            if (m.Key.EndsWith(nameWithDot))
+            {
+                return m.Value;
+            }
+        }
+
+        return null;
+    }
 }

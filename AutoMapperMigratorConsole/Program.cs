@@ -57,7 +57,14 @@ namespace AutoMapperMigratorConsole
                 var serviceProvider = serviceCollection.BuildServiceProvider();
                 var analyzeSolutionService = serviceProvider.GetService<IAnalyzeSolutionService>();
 
-                await analyzeSolutionService.AnalyzeSolution(solutionPath);
+                if (args.Length == 3)
+                {
+                    await analyzeSolutionService.AnalyzeForOneMap(solutionPath, args[1], args[2]);
+                }
+                else
+                {
+                    await analyzeSolutionService.AnalyzeSolution(solutionPath);
+                }
 
                 Console.WriteLine("All done!");
             }

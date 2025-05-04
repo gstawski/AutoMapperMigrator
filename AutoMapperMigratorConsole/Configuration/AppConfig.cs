@@ -20,6 +20,9 @@ public class AppConfig
     [XmlElement(ElementName = "UseFullNameSpaces")]
     public bool UseFullNameSpaces { get; set; }
 
+    [XmlElement(ElementName = "SearchClassPostfixes")]
+    public string SearchClassPostfixes { get; set; }
+
     [XmlElement(ElementName = "DefaultNameSpaces")]
     public DefaultNameSpaces DefaultNameSpace { get; set; }
 

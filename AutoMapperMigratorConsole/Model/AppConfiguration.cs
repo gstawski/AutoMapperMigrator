@@ -14,6 +14,8 @@ public class AppConfiguration
 
     public string MapFunctionNamesPrefix { get; set; }
 
+    public List<string> SearchClassPostfixes { get; set; }
+
     public List<string> DefaultNameSpaces { get; set; }
 
     public Dictionary<string,Function> ConvertFunctions { get; set; }
