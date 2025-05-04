@@ -153,93 +153,6 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         return ctorParams;
     }
 
-    public AnalyzeSolutionService(AppConfiguration configuration, ICodeTreeGeneratorService codeTreeGeneratorService)
-    {
-        _configuration = configuration;
-        _codeTreeGeneratorService = codeTreeGeneratorService;
-    }
-
-    public async Task AnalyzeSolution(string solutionPath)
-    {
-        // Load the solution and analyze it
-        var solution = await WorkspaceSolution.Load(solutionPath);
-
-        var models = await solution.AllProjectSymbols();
-
-        var profiles = await GetMapperProfiles(solution);
-
-        foreach (var profile in profiles)
-        {
-            var space = profile.Project.DefaultNamespace;
-
-            var solutionContext = new SolutionContext(models, space);
-
-            List<ClassMapDefinition> classMaps = solutionContext.ClassMaps;
-
-            foreach (var mapping in profile.Mappings)
-            {
-                var sourceType = GetClassDefinition(solutionContext, mapping.SourceType);
-                var destinationType = GetClassDefinition(solutionContext, mapping.DestinationType);
-
-                if (sourceType.HasProperties && destinationType.HasProperties)
-                {
-                    var clasMap = new ClassMapDefinition
-                    {
-                        SourceClass = sourceType,
-                        DestinationClass = destinationType,
-                        FieldsMap = mapping.FieldsMap
-                    };
-
-                    classMaps.Add(clasMap);
-
-                    if (mapping.ReverseMap)
-                    {
-                        var reverseFields = mapping.FieldsMap
-                            .Where(x => x.SyntaxNode == null)
-                            .Select(x => new AutoMapperFieldInfo
-                            {
-                                SourceField = x.DestinationField,
-                                DestinationField = x.SourceField,
-                                Ignore = x.Ignore,
-                                SyntaxNode = x.SyntaxNode
-                            })
-                            .ToList();
-
-                        var clasMapReverse = new ClassMapDefinition
-                        {
-                            SourceClass = destinationType,
-                            DestinationClass = sourceType,
-                            FieldsMap = reverseFields
-                        };
-
-                        classMaps.Add(clasMapReverse);
-                    }
-                }
-            }
-
-            var mapperClass = _codeTreeGeneratorService.CreateMapper(solutionContext);
-
-            var code = mapperClass.NormalizeWhitespace().ToFullString();
-            Console.WriteLine(code);
-
-            if (!string.IsNullOrEmpty(_configuration.OutputPath))
-            {
-                var mappath = Path.Combine(profile.Project.ProjectPath, _configuration.OutputPath);
-
-                if (!Directory.Exists(mappath))
-                {
-                    Directory.CreateDirectory(mappath);
-                }
-
-                if (!string.IsNullOrEmpty(_configuration.OutputFileName))
-                {
-                    var path = Path.Combine(mappath, _configuration.OutputFileName);
-                    await File.WriteAllTextAsync(path, code, Encoding.UTF8);
-                }
-            }
-        }
-    }
-
     private static void CheckComplexTypesInPropertyList(SolutionContext solutionContext, AppConfiguration appConfiguration, ClassDefinition destinationType, List<AutoMapperFieldInfo> fieldsMap)
     {
         foreach (var prp in destinationType.PropertiesAndTypes.Values)
@@ -363,6 +276,100 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         }
     }
 
+    private static void OutputCodeToConsole(string code)
+    {
+        Console.WriteLine(String.Empty);
+        Console.WriteLine(String.Empty);
+        Console.WriteLine(code);
+    }
+
+    public AnalyzeSolutionService(AppConfiguration configuration, ICodeTreeGeneratorService codeTreeGeneratorService)
+    {
+        _configuration = configuration;
+        _codeTreeGeneratorService = codeTreeGeneratorService;
+    }
+
+    public async Task AnalyzeSolution(string solutionPath)
+    {
+        // Load the solution and analyze it
+        var solution = await WorkspaceSolution.Load(solutionPath);
+
+        var models = await solution.AllProjectSymbols();
+
+        var profiles = await GetMapperProfiles(solution);
+
+        foreach (var profile in profiles)
+        {
+            var space = profile.Project.DefaultNamespace;
+
+            var solutionContext = new SolutionContext(models, space);
+
+            List<ClassMapDefinition> classMaps = solutionContext.ClassMaps;
+
+            foreach (var mapping in profile.Mappings)
+            {
+                var sourceType = GetClassDefinition(solutionContext, mapping.SourceType);
+                var destinationType = GetClassDefinition(solutionContext, mapping.DestinationType);
+
+                if (sourceType.HasProperties && destinationType.HasProperties)
+                {
+                    var clasMap = new ClassMapDefinition
+                    {
+                        SourceClass = sourceType,
+                        DestinationClass = destinationType,
+                        FieldsMap = mapping.FieldsMap
+                    };
+
+                    classMaps.Add(clasMap);
+
+                    if (mapping.ReverseMap)
+                    {
+                        var reverseFields = mapping.FieldsMap
+                            .Where(x => x.SyntaxNode == null)
+                            .Select(x => new AutoMapperFieldInfo
+                            {
+                                SourceField = x.DestinationField,
+                                DestinationField = x.SourceField,
+                                Ignore = x.Ignore,
+                                SyntaxNode = x.SyntaxNode
+                            })
+                            .ToList();
+
+                        var clasMapReverse = new ClassMapDefinition
+                        {
+                            SourceClass = destinationType,
+                            DestinationClass = sourceType,
+                            FieldsMap = reverseFields
+                        };
+
+                        classMaps.Add(clasMapReverse);
+                    }
+                }
+            }
+
+            var mapperClass = _codeTreeGeneratorService.CreateMapper(solutionContext);
+
+            var code = mapperClass.NormalizeWhitespace().ToFullString();
+            OutputCodeToConsole(code);
+
+            if (!string.IsNullOrEmpty(_configuration.OutputPath))
+            {
+                var mappath = Path.Combine(profile.Project.ProjectPath, _configuration.OutputPath);
+
+                if (!Directory.Exists(mappath))
+                {
+                    Directory.CreateDirectory(mappath);
+                }
+
+                if (!string.IsNullOrEmpty(_configuration.OutputFileName))
+                {
+                    var path = Path.Combine(mappath, _configuration.OutputFileName);
+                    await File.WriteAllTextAsync(path, code, Encoding.UTF8);
+                }
+            }
+        }
+    }
+
     public async Task AnalyzeForOneMap(string solutionPath, string sourceClass, string destinationClass)
     {
         var solution = await WorkspaceSolution.Load(solutionPath);
@@ -390,6 +397,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         var mapperClass = _codeTreeGeneratorService.CreateMapper(solutionContext);
 
         var code = mapperClass.NormalizeWhitespace().ToFullString();
-        Console.WriteLine(code);
+
+        OutputCodeToConsole(code);
     }
 }
