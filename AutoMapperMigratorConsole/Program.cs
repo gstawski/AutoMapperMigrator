@@ -22,6 +22,17 @@ namespace AutoMapperMigratorConsole
             Console.WriteLine("MSBuildLocator.RegisterInstance done!");
         }
 
+        private static void DisplayHelp()
+        {
+            Console.WriteLine("? - Display this help");
+            Console.WriteLine(string.Empty);
+            Console.WriteLine("Find all AutoMapper profiles in the solution and try generate mapping functions:");
+            Console.WriteLine("AutoMapperMigratorConsole.exe c:\\path\\to\\project\\to\\analyze\\solution.sln");
+            Console.WriteLine(string.Empty);
+            Console.WriteLine("Generate mapping function between two any classes in solution:");
+            Console.WriteLine("AutoMapperMigratorConsole.exe c:\\path\\to\\project\\to\\analyze\\solution.sln sourceClass destinationClass");
+        }
+
         private static async Task Main(string[] args)
         {
             try
@@ -31,6 +42,15 @@ namespace AutoMapperMigratorConsole
                 if (args.Length == 0)
                 {
                     Console.WriteLine("Please provide the solution path as an argument.");
+
+                    DisplayHelp();
+
+                    return;
+                }
+
+                if (args.Length == 1 && args[0].Contains("?"))
+                {
+                    DisplayHelp();
                     return;
                 }
 
@@ -66,7 +86,7 @@ namespace AutoMapperMigratorConsole
                     await analyzeSolutionService.AnalyzeSolution(solutionPath);
                 }
 
-                Console.WriteLine("All done!");
+                Console.WriteLine("\r\n\r\nAll done!");
             }
             catch (Exception e)
             {
