@@ -6,7 +6,7 @@ namespace AutoMapperMigratorConsole.Interfaces;
 
 public interface ICodeTreeConvertToTypeService
 {
-    ExpressionSyntax CallMapFunction(PropertyDefinition destination);
+    ExpressionSyntax CallMapFunction(SolutionContext solutionContext, PropertyDefinition destination);
 
     ExpressionSyntax ConvertToType(SolutionContext solutionContext, PropertyDefinition destination, PropertyDefinition source, ExpressionSyntax expression, Dictionary<string, ConvertFunctionDefinition> usedTypes);
 

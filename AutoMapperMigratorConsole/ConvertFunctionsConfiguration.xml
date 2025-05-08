@@ -315,6 +315,38 @@
             </FunctionBody>
         </Function>
         <Function>
+            <FunctionName>ToDateTimeOffset</FunctionName>
+            <InputTypeName>DateTime</InputTypeName>
+            <OutputTypeName>System.DateTimeOffset</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static System.DateTimeOffset ToDateTimeOffset(DateTime value)
+                {
+                    TimeZoneInfo localZone = TimeZoneInfo.Local;
+                    TimeSpan offset = localZone.GetUtcOffset(value.Value);
+                    return new DateTimeOffset(value.Value, offset);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDateTimeOffsetNullable</FunctionName>
+            <InputTypeName>DateTime?</InputTypeName>
+            <OutputTypeName>System.DateTimeOffset?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static System.DateTimeOffset? ToDateTimeOffsetNullable(DateTime? value)
+                {
+                    if (value.HasValue)
+                    {
+                        TimeZoneInfo localZone = TimeZoneInfo.Local;
+                        TimeSpan offset = localZone.GetUtcOffset(value);
+                        return new DateTimeOffset(value, offset);
+                    }
+                    return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
             <FunctionName>ToTimeSpan</FunctionName>
             <InputTypeName>DateTimeOffset</InputTypeName>
             <OutputTypeName>TimeSpan</OutputTypeName>
@@ -473,6 +505,22 @@
         </Function>
         <Function>
             <FunctionName>ToString</FunctionName>
+            <InputTypeName>TimeSpan?</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string? ToString(TimeSpan? value)
+                {
+                if (value.HasValue)
+                {
+                    return value.Value.ToString();
+                }
+                return null;
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
             <InputTypeName>int</InputTypeName>
             <OutputTypeName>string</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
@@ -489,7 +537,7 @@
             <OutputTypeName>string</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
-                private static string ToString(int? value)
+                private static string? ToString(int? value)
                 {
                 if (value.HasValue)
                 {
@@ -517,7 +565,7 @@
             <OutputTypeName>string</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
-                private static string ToString(long? value)
+                private static string? ToString(long? value)
                 {
                 if (value.HasValue)
                 {
@@ -545,7 +593,7 @@
             <OutputTypeName>string</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
-                private static string ToString(double? value)
+                private static string? ToString(double? value)
                 {
                 if (value.HasValue)
                 {
@@ -573,7 +621,7 @@
             <OutputTypeName>string</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
-                private static string ToString(decimal? value)
+                private static string? ToString(decimal? value)
                 {
                 if (value.HasValue)
                 {
@@ -589,7 +637,7 @@
             <OutputTypeName>string</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
-                private static string ToString(char? value)
+                private static string? ToString(char? value)
                 {
                 if (value.HasValue)
                 {

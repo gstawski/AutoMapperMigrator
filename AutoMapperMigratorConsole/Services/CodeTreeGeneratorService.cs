@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AutoMapperMigratorConsole.Interfaces;
 using AutoMapperMigratorConsole.Model;
@@ -250,7 +251,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                 }
                 else if (!dp.AfterMap && !string.IsNullOrEmpty(dp.Code))
                 {
-                    var functionCall = _codeTreeConvertToTypeService.CallMapFunction(desc.Value);
+                    var functionCall = _codeTreeConvertToTypeService.CallMapFunction(solutionContext, desc.Value);
                     AssignProperties(statements, DestinationMember(desc.Value.Name), functionCall);
                 }
                 else
@@ -273,7 +274,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                 {
                     if (SimpleLambdaMapToSelf(simpleLambda))
                     {
-                        var functionCall = _codeTreeConvertToTypeService.CallMapFunction(desc.Value);
+                        var functionCall = _codeTreeConvertToTypeService.CallMapFunction(solutionContext, desc.Value);
                         AssignProperties(statements, DestinationMember(desc.Value.Name), functionCall);
                     }
                 }
@@ -345,6 +346,11 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
             return true;
         }
 
+        if (source.Type.StartsWith("string", StringComparison.InvariantCultureIgnoreCase) && desc.Type.StartsWith("string", StringComparison.InvariantCultureIgnoreCase))
+        {
+            return true;
+        }
+
         return false;
     }
 
@@ -370,7 +376,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
 
         var methodDeclaration = SyntaxFactory.MethodDeclaration(
                 ReturnParameterType(_appConfiguration, descClass),
-                SyntaxFactory.Identifier(_appConfiguration.MapFunctionNamesPrefix + descClass.ShortTypeName))
+                SyntaxFactory.Identifier(solutionContext.GetFunctionName(_appConfiguration.MapFunctionNamesPrefix + descClass.ShortTypeName, descClass.TypeNameWithNamespace)))
             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword))
             .AddParameterListParameters(SourceParameter(_appConfiguration, sourceClass, "source"))
             .WithBody(body);

@@ -6,6 +6,7 @@ namespace AutoMapperMigratorConsole.Model;
 public class SolutionContext
 {
     private readonly Dictionary<string, ISymbol> _models;
+    private readonly Dictionary<string, Dictionary<string, int>> _functionsNames = new();
 
     public string DefaultNamespace { get; }
 
@@ -76,5 +77,39 @@ public class SolutionContext
         }
 
         return null;
+    }
+
+    public string FindFunctionName(string prefix, string name)
+    {
+        var symbol = TryGetSolutionSymbol(name);
+        if (symbol == null)
+        {
+            return prefix + name;
+        }
+
+        return GetFunctionName(prefix + name, symbol.ToDisplayString());
+    }
+
+    public string GetFunctionName(string name, string nameWithNamespace)
+    {
+        if (_functionsNames.TryGetValue(name, out var dct))
+        {
+            if (dct.TryGetValue(nameWithNamespace, out var number))
+            {
+                if (number > 0)
+                {
+                    return name+number;
+                }
+
+                return name;
+            }
+
+            int count = dct.Count;
+            dct.TryAdd(nameWithNamespace, count);
+            return name+count;
+        }
+
+        _functionsNames.Add(name, new Dictionary<string,int> { { nameWithNamespace, 0 } });
+        return name;
     }
 }

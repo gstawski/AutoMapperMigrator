@@ -146,9 +146,9 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
                 );
     }
 
-    public ExpressionSyntax CallMapFunction(PropertyDefinition destination)
+    public ExpressionSyntax CallMapFunction(SolutionContext solutionContext, PropertyDefinition destination)
     {
-        var function = _appConfiguration.MapFunctionNamesPrefix + destination.Type;
+        var function = solutionContext.FindFunctionName(_appConfiguration.MapFunctionNamesPrefix, destination.Type);
 
         var exp = SyntaxFactory.ParseExpression("source");
 
@@ -251,7 +251,7 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
         if (solutionContext.IsSolutionType(destinationType))
         {
-            var function = _appConfiguration.MapFunctionNamesPrefix + destinationType;
+            var function = solutionContext.FindFunctionName(_appConfiguration.MapFunctionNamesPrefix, destinationType);
             return CallFunction(function, expression);
         }
 
