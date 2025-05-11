@@ -474,6 +474,11 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
                 var sourceType = GetClassDefinition(solutionContext, mapping.SourceType);
                 var destinationType = GetClassDefinition(solutionContext, mapping.DestinationType);
 
+                if (sourceType.TypeName == destinationType.TypeName)
+                {
+                    continue;
+                }
+
                 if (sourceType.HasProperties && destinationType.HasProperties)
                 {
                     classMaps.Add(new ClassMapDefinition(sourceType, destinationType, mapping.FieldsMap.ToList()));
