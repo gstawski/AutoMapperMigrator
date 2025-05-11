@@ -148,7 +148,16 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
     public ExpressionSyntax CallMapFunction(SolutionContext solutionContext, PropertyDefinition destination)
     {
-        var function = solutionContext.FindFunctionName(_appConfiguration.MapFunctionNamesPrefix, destination.Type);
+        var function = solutionContext.FindFunctionName(destination.Type);
+
+        var exp = SyntaxFactory.ParseExpression("source");
+
+        return CallFunction(function, exp);
+    }
+
+    public ExpressionSyntax CallMapFunction(SolutionContext solutionContext, PropertyDefinition destination, PropertyDefinition source)
+    {
+        var function = solutionContext.FindFunctionName(destination.Type, source.FullTypeName);
 
         var exp = SyntaxFactory.ParseExpression("source");
 
@@ -262,7 +271,7 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
         if (solutionContext.IsSolutionType(destinationType))
         {
-            var function = solutionContext.FindFunctionName(_appConfiguration.MapFunctionNamesPrefix, destinationType);
+            var function = solutionContext.FindFunctionName(destinationType, source.FullTypeName);
             return CallFunction(function, expression);
         }
 
@@ -277,17 +286,17 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
                 if (collectionTypes.ContainsKey(ntype))
                 {
-                    var ltype = FullTypeName(solutionContext, split[1]);
+                    var fullTypeName = FullTypeName(solutionContext, split[1]);
 
-                    if (_primitiveTypes.ContainsKey(ltype))
+                    if (_primitiveTypes.ContainsKey(fullTypeName))
                     {
-                        var code = $"source.{source.Name} != null ? source.{source.Name}.ToList() : new List<{ltype}>()";
+                        var code = $"source.{source.Name} != null ? source.{source.Name}.ToList() : new List<{fullTypeName}>()";
                         var exp = SyntaxFactory.ParseExpression(code);
                         return exp;
                     }
 
                     var sourceTypeName = GetGenericType(sourceType);
-                    var enumSymbol = solutionContext.TryGetSolutionSymbol(ltype);
+                    var enumSymbol = solutionContext.TryGetSolutionSymbol(fullTypeName);
                     var sourceEnumSymbol = solutionContext.TryGetSolutionSymbol(sourceTypeName);
                     if (IsEnumType(enumSymbol) && IsEnumType(sourceEnumSymbol))
                     {
@@ -296,14 +305,16 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
                             usedTypes.TryAdd("CastEnum", new ConvertFunctionDefinition(f2.FunctionName, f2.FunctionBody, false));
 
                             var sType = FullTypeName(sourceEnumSymbol, sourceTypeName);
-                            var code = $"source.{source.Name} != null ? source.{source.Name}.Select(CastEnum<{sType},{ltype}>).ToList() : new List<{ltype}>()";
+                            var code = $"source.{source.Name} != null ? source.{source.Name}.Select(CastEnum<{sType},{fullTypeName}>).ToList() : new List<{fullTypeName}>()";
                             var exp = SyntaxFactory.ParseExpression(code);
                             return exp;
                         }
                     }
                     else
                     {
-                        var code = $"source.{source.Name} != null ? source.{source.Name}.Select(Map{split[1]}).ToList() : new List<{ltype}>()";
+                        var mapFuncName = solutionContext.GetFunctionName(fullTypeName, sourceTypeName);
+
+                        var code = $"source.{source.Name} != null ? source.{source.Name}.Select({mapFuncName}).ToList() : new List<{fullTypeName}>()";
                         var exp = SyntaxFactory.ParseExpression(code);
                         return exp;
                     }
@@ -334,7 +345,10 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
             if (solutionContext.IsSolutionType(ntype))
             {
-                var code = $"source.{source.Name} != null ? source.{source.Name}.Select(Map{ntype}).ToArray() : new List<{ntype}>().ToArray()";
+                var mapFuncName = solutionContext.FindFunctionName(ntype, source.FullTypeName);
+                var fullTypeName = FullTypeName(solutionContext, ntype);
+
+                var code = $"source.{source.Name} != null ? source.{source.Name}.Select({mapFuncName}).ToArray() : new List<{fullTypeName}>().ToArray()";
                 var exp = SyntaxFactory.ParseExpression(code);
                 return exp;
             }

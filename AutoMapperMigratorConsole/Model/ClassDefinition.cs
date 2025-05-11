@@ -16,10 +16,11 @@ public class PropertyDefinition
         return typeName;
     }
 
-    public PropertyDefinition(string name, string type, int order, bool isSetPublic, bool isSimpleType)
+    public PropertyDefinition(string name, string type, string fullTypeName, int order, bool isSetPublic, bool isSimpleType)
     {
         Name = name;
         Type = type;
+        FullTypeName = fullTypeName;
         Order = order;
         IsPublicSet = isSetPublic;
         IsSimpleType = isSimpleType;
@@ -27,10 +28,11 @@ public class PropertyDefinition
         RawType = SimplyTypeName(type);
     }
 
-    public PropertyDefinition(string name, string type, int order, string propertyAssignment, bool isSimpleType)
+    public PropertyDefinition(string name, string type, string fullTypeName, int order, string propertyAssignment, bool isSimpleType)
     {
         Name = name;
         Type = type;
+        FullTypeName = fullTypeName;
         Order = order;
         IsPublicSet = true;
         IsSimpleType = isSimpleType;
@@ -44,6 +46,8 @@ public class PropertyDefinition
     public string PropertyAssignment { get; }
 
     public string Type { get; }
+
+    public string FullTypeName { get; }
 
     public string RawType { get; }
 

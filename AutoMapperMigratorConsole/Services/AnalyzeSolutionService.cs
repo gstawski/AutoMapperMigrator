@@ -55,6 +55,64 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         return null;
     }
 
+    private static List<string> GetNamespacesForClass(ClassDeclarationSyntax classDeclaration)
+    {
+        List<string> namespaces = new List<string>();
+
+        if (classDeclaration == null)
+        {
+            return namespaces;
+        }
+
+        var namespaceParts = new List<string>();
+        SyntaxNode? currentParent = classDeclaration.Parent;
+
+        while (currentParent != null)
+        {
+            if (currentParent is NamespaceDeclarationSyntax namespaceDeclaration)
+            {
+                namespaceParts.Add(namespaceDeclaration.Name.ToString());
+            }
+            else if (currentParent is FileScopedNamespaceDeclarationSyntax fileScopedNamespaceDeclaration)
+            {
+                namespaceParts.Add(fileScopedNamespaceDeclaration.Name.ToString());
+            }
+
+            currentParent = currentParent.Parent;
+        }
+
+        namespaceParts.Reverse();
+        namespaces.AddRange(namespaceParts);
+
+        var allUsings = new List<UsingDirectiveSyntax>();
+        SyntaxNode? currentNode = classDeclaration;
+
+        while (currentNode != null)
+        {
+            if (currentNode is NamespaceDeclarationSyntax namespaceDeclaration)
+            {
+                allUsings.AddRange(namespaceDeclaration.Usings);
+            }
+            else if (currentNode is CompilationUnitSyntax compilationUnit)
+            {
+                allUsings.AddRange(compilationUnit.Usings);
+            }
+
+            currentNode = currentNode.Parent;
+        }
+
+        foreach (var usingDirective in allUsings)
+        {
+            var namespaceName = usingDirective.Name?.ToString();
+            if (!string.IsNullOrEmpty(namespaceName) && !namespaceName.StartsWith("System"))
+            {
+                namespaces.Add(namespaceName);
+            }
+        }
+
+        return namespaces;
+    }
+
     private static ClassDefinition GetClassDefinition(SolutionContext solutionContext, string className)
     {
         var properties = new Dictionary<string, PropertyDefinition>();
@@ -68,6 +126,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
             var nameSpace = symbolSource.ContainingNamespace.ToString();
 
             var classDeclaration = GetClassDeclarationSyntax(symbolSource);
+            var namespaces = GetNamespacesForClass(classDeclaration);
 
             FindPublicPropertiesCollector publicPropertiesCollector = new FindPublicPropertiesCollector();
             publicPropertiesCollector.Visit(classDeclaration);
@@ -75,7 +134,19 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
             {
                 foreach (var prop in publicPropertiesCollector.Properties)
                 {
-                    properties.Add(prop.Name.ToLower(), new PropertyDefinition(prop.Name, prop.Type, prop.Order, prop.IsSetPublic, prop.IsSimleType));
+                    var typeName = prop.Type;
+                    if (typeName.Contains("."))
+                    {
+                        typeName = FixTypeName(typeName);
+                    }
+
+                    string fullTypeName = null;
+                    if (!prop.IsSimleType)
+                    {
+                        fullTypeName = GetFullTypeName(solutionContext, namespaces, prop.Type);
+                    }
+
+                    properties.Add(prop.Name.ToLower(), new PropertyDefinition(prop.Name, typeName, fullTypeName, prop.Order, prop.IsSetPublic, prop.IsSimleType));
                 }
             }
 
@@ -96,7 +167,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
                         continue;
                     }
 
-                    var ctorParams = GetPropertyDefinitions(modelCollector, bodyCollector.FieldAssignments);
+                    var ctorParams = GetPropertyDefinitions(solutionContext, modelCollector, bodyCollector.FieldAssignments, namespaces);
 
                     if (ctorParams.Count > 0)
                     {
@@ -115,7 +186,95 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         return new ClassDefinition(className, string.Empty, new Dictionary<string, PropertyDefinition>(), constructors);
     }
 
-    private static Dictionary<string, PropertyDefinition> GetPropertyDefinitions(FindModelsCollector modelCollector, Dictionary<string, string> bodyCollectorFieldAssignments)
+    private static string FixTypeName(string typeName)
+    {
+        if (typeName.Contains("<"))
+        {
+            var split = typeName.Split(new[] { '<', '>', ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            for (int i = 0; i < split.Count; i++)
+            {
+                var type = split[i];
+                if (type.Contains("."))
+                {
+                    split[i] = GetLastTypeSegment(type);
+                }
+            }
+
+            return split[0] + "<" + string.Join(",", split.Skip(1)) + ">";
+        }
+
+        if (typeName.Contains("."))
+        {
+            return GetLastTypeSegment(typeName);
+        }
+
+        return typeName;
+    }
+
+    private static string GetLastTypeSegment(string space)
+    {
+        if (string.IsNullOrEmpty(space))
+        {
+            return string.Empty;
+        }
+
+        var lastDotIndex = space.LastIndexOf('.');
+        if (lastDotIndex == -1)
+        {
+            return space;
+        }
+        return space.Substring(lastDotIndex+1);
+    }
+
+    private static string RemoveLastTypeSegment(string space)
+    {
+        if (string.IsNullOrEmpty(space))
+        {
+            return string.Empty;
+        }
+
+        var lastDotIndex = space.LastIndexOf('.');
+        if (lastDotIndex == -1)
+        {
+            return space;
+        }
+        return space.Substring(0, lastDotIndex);
+    }
+
+    private static string GetFullTypeName(SolutionContext solutionContext, List<string> spaces, string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+        {
+            return null;
+        }
+
+        var split = typeName.Split(new[] { '<', '>', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (split.Length == 1)
+        {
+            var typeSymbol = solutionContext.TryGetSolutionSymbol(typeName, spaces);
+            if (typeSymbol != null)
+            {
+                return typeSymbol.ToDisplayString();
+
+            }
+        }
+        else
+        {
+            var typeSymbol = solutionContext.TryGetSolutionSymbol(split[^1], spaces);
+            if (typeSymbol != null)
+            {
+                return typeSymbol.ToDisplayString();
+            }
+        }
+        return null;
+    }
+
+    private static Dictionary<string, PropertyDefinition> GetPropertyDefinitions(
+        SolutionContext solutionContext,
+        FindModelsCollector modelCollector,
+        Dictionary<string, string> bodyCollectorFieldAssignments,
+        List<string> spaces)
     {
         var ctorParams = new Dictionary<string, PropertyDefinition>();
 
@@ -146,7 +305,18 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
 
             if (bodyCollectorFieldAssignments.TryGetValue(name, out var assignment))
             {
-                ctorParams.Add(assignment.ToLower(), new PropertyDefinition(name, typeName, ++order, assignment, isSimpleType));
+                string fullTypeName = null;
+                if (!isSimpleType)
+                {
+                    fullTypeName = GetFullTypeName(solutionContext, spaces, typeName);
+                }
+
+                if (!string.IsNullOrEmpty(typeName) && typeName.Contains("."))
+                {
+                    typeName = FixTypeName(typeName);
+                }
+
+                ctorParams.Add(assignment.ToLower(), new PropertyDefinition(name, typeName, fullTypeName, ++order, assignment, isSimpleType));
             }
         }
 
@@ -295,7 +465,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         {
             var space = profile.Project.DefaultNamespace;
 
-            var solutionContext = new SolutionContext(models, space);
+            var solutionContext = new SolutionContext(models, space, _configuration.MapFunctionNamesPrefix);
 
             List<ClassMapDefinition> classMaps = solutionContext.ClassMaps;
 
@@ -355,7 +525,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
 
         var models = await solution.AllProjectSymbols();
 
-        var solutionContext = new SolutionContext(models, "Test");
+        var solutionContext = new SolutionContext(models, "Test", _configuration.MapFunctionNamesPrefix);
 
         var sourceSymbol = solutionContext.TryGetSolutionSymbol(sourceClass);
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
 namespace AutoMapperMigratorConsole.Model;
@@ -6,16 +7,18 @@ namespace AutoMapperMigratorConsole.Model;
 public class SolutionContext
 {
     private readonly Dictionary<string, ISymbol> _models;
+    private readonly string _mapFunctionPrefix;
     private readonly Dictionary<string, Dictionary<string, int>> _functionsNames = new();
 
     public string DefaultNamespace { get; }
 
     public List<ClassMapDefinition> ClassMaps { get; } = new();
 
-    public SolutionContext(Dictionary<string,ISymbol> models, string defaultNamespace)
+    public SolutionContext(Dictionary<string,ISymbol> models, string defaultNamespace, string mapFunctionPrefix)
     {
         DefaultNamespace = defaultNamespace;
         _models = models;
+        _mapFunctionPrefix = mapFunctionPrefix;
     }
 
     public bool IsSolutionType(string type)
@@ -36,8 +39,36 @@ public class SolutionContext
         return f;
     }
 
+    public ISymbol TryGetSolutionSymbol(string type, List<string> namespaces)
+    {
+        if (type.EndsWith("?"))
+        {
+            type = type.Substring(0, type.Length - 1);
+        }
+
+        foreach (var space in namespaces)
+        {
+            if (_models.TryGetValue($"{space}.{type}", out var solutionType))
+            {
+                return solutionType;
+            }
+        }
+
+        if (type.Contains('.'))
+        {
+            return TryGetSolutionSymbol(type);
+        }
+
+        return null;
+    }
+
     public ISymbol TryGetSolutionSymbol(string type)
     {
+        if (string.IsNullOrEmpty(type))
+        {
+            return null;
+        }
+
         if (type.EndsWith("?"))
         {
             type = type.Substring(0, type.Length - 1);
@@ -79,18 +110,30 @@ public class SolutionContext
         return null;
     }
 
-    public string FindFunctionName(string prefix, string name)
+    public string FindFunctionName(string name)
     {
-        var symbol = TryGetSolutionSymbol(name);
-        if (symbol == null)
-        {
-            return prefix + name;
-        }
-
-        return GetFunctionName(prefix + name, symbol.ToDisplayString());
+        return _mapFunctionPrefix + name;
     }
 
-    public string GetFunctionName(string name, string nameWithNamespace)
+    public string FindFunctionName(string name, string sourceType)
+    {
+        var symbol = TryGetSolutionSymbol(sourceType);
+        if (symbol == null)
+        {
+            return _mapFunctionPrefix + name;
+        }
+
+        return _mapFunctionPrefix + FunctionName(name, symbol.ToDisplayString());
+    }
+
+    public string GetFunctionName(string descNameWithNamespace, string sourceNameWithNamespace)
+    {
+        var name = descNameWithNamespace.Split('.')[^1];
+
+        return  _mapFunctionPrefix + FunctionName(name, sourceNameWithNamespace);
+    }
+
+    private string FunctionName(string name, string nameWithNamespace)
     {
         if (_functionsNames.TryGetValue(name, out var dct))
         {

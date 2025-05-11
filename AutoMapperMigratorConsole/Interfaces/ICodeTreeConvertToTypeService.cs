@@ -8,6 +8,8 @@ public interface ICodeTreeConvertToTypeService
 {
     ExpressionSyntax CallMapFunction(SolutionContext solutionContext, PropertyDefinition destination);
 
+    ExpressionSyntax CallMapFunction(SolutionContext solutionContext, PropertyDefinition destination, PropertyDefinition source);
+
     ExpressionSyntax ConvertToType(SolutionContext solutionContext, PropertyDefinition destination, PropertyDefinition source, ExpressionSyntax expression, Dictionary<string, ConvertFunctionDefinition> usedTypes);
 
     List<MemberDeclarationSyntax> GetConvertFunctionsBodies(Dictionary<string, ConvertFunctionDefinition> usedTypes);

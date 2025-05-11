@@ -266,7 +266,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
                 }
                 else if (!dp.AfterMap && !string.IsNullOrEmpty(dp.Code))
                 {
-                    var functionCall = _codeTreeConvertToTypeService.CallMapFunction(solutionContext, desc.Value);
+                    var functionCall = _codeTreeConvertToTypeService.CallMapFunction(solutionContext, desc.Value, source0);
                     AssignProperties(statements, DestinationMember(desc.Value.Name), functionCall);
                 }
                 else
@@ -391,7 +391,7 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
 
         var methodDeclaration = SyntaxFactory.MethodDeclaration(
                 ReturnParameterType(_appConfiguration, descClass),
-                SyntaxFactory.Identifier(solutionContext.GetFunctionName(_appConfiguration.MapFunctionNamesPrefix + descClass.ShortTypeName, descClass.TypeNameWithNamespace)))
+                SyntaxFactory.Identifier(solutionContext.GetFunctionName(descClass.TypeNameWithNamespace, sourceClass.TypeNameWithNamespace)))
             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword))
             .AddParameterListParameters(SourceParameter(_appConfiguration, sourceClass, "source"))
             .WithBody(body);
