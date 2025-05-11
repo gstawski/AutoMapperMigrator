@@ -203,7 +203,22 @@ public class CodeTreeGeneratorService : ICodeTreeGeneratorService
         FindMemberAccessExpression memberAccessExpression = new FindMemberAccessExpression();
         memberAccessExpression.Visit(sourceNode);
 
-        IdentifierReplacer replacer = new IdentifierReplacer(memberAccessExpression.MemberName, "source");
+        var memberName = memberAccessExpression.MemberName;
+
+        if (string.IsNullOrEmpty(memberName))
+        {
+            memberAccessExpression = new FindMemberAccessExpression();
+            memberAccessExpression.Visit(descNode);
+
+            memberName = memberAccessExpression.MemberName;
+        }
+
+        if (!string.IsNullOrEmpty(memberName) && memberName.Contains("."))
+        {
+            memberName = memberName.Split('.').First();
+        }
+
+        IdentifierReplacer replacer = new IdentifierReplacer(memberName, "source");
         var newCode = replacer.Visit(descNode);
         return newCode as ExpressionSyntax;
     }

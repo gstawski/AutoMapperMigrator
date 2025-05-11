@@ -4,7 +4,14 @@ namespace AutoMapperMigratorConsole.Model;
 
 public class ClassMapDefinition
 {
-    public ClassDefinition SourceClass { get; set; }
-    public ClassDefinition DestinationClass { get; set; }
-    public ICollection<AutoMapperFieldInfo> FieldsMap { get; set; }
+    public ClassDefinition SourceClass { get; }
+    public ClassDefinition DestinationClass { get; }
+    public ICollection<AutoMapperFieldInfo> FieldsMap { get; }
+
+    public ClassMapDefinition(ClassDefinition sourceClass, ClassDefinition destinationClass, List<AutoMapperFieldInfo> fieldsMap)
+    {
+        SourceClass = sourceClass;
+        DestinationClass = destinationClass;
+        FieldsMap = fieldsMap;
+    }
 }

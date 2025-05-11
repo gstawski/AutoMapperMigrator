@@ -265,14 +265,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
 
         if (fieldsMap.Count > 0)
         {
-            var clasMap = new ClassMapDefinition
-            {
-                SourceClass = sourceType,
-                DestinationClass = destinationType,
-                FieldsMap = fieldsMap
-            };
-
-            solutionContext.ClassMaps.Add(clasMap);
+            solutionContext.ClassMaps.Add(new ClassMapDefinition(sourceType, destinationType, fieldsMap));
         }
     }
 
@@ -313,14 +306,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
 
                 if (sourceType.HasProperties && destinationType.HasProperties)
                 {
-                    var clasMap = new ClassMapDefinition
-                    {
-                        SourceClass = sourceType,
-                        DestinationClass = destinationType,
-                        FieldsMap = mapping.FieldsMap
-                    };
-
-                    classMaps.Add(clasMap);
+                    classMaps.Add(new ClassMapDefinition(sourceType, destinationType, mapping.FieldsMap.ToList()));
 
                     if (mapping.ReverseMap)
                     {
@@ -335,14 +321,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
                             })
                             .ToList();
 
-                        var clasMapReverse = new ClassMapDefinition
-                        {
-                            SourceClass = destinationType,
-                            DestinationClass = sourceType,
-                            FieldsMap = reverseFields
-                        };
-
-                        classMaps.Add(clasMapReverse);
+                        classMaps.Add(new ClassMapDefinition(destinationType, sourceType, reverseFields));
                     }
                 }
             }

@@ -174,9 +174,10 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
             return CallFunction(f.FunctionName, expression);
         }
 
-        if (source.Type != source.RawType || destination.Type != destination.RawType)
+        var destinationTypeLow = destination.RawType.ToLower();
+        if (destinationTypeLow == "string")
         {
-            functionKey = $"{source.RawType.ToLower()}-{destination.RawType.ToLower()}";
+            functionKey = $"{source.RawType.ToLower()}-string?";
             if (functions.TryGetValue(functionKey, out var fs))
             {
                 usedTypes.TryAdd(functionKey, new ConvertFunctionDefinition(fs.FunctionName, fs.FunctionBody, false));
@@ -184,13 +185,23 @@ public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
             }
         }
 
-        if (destination.Type.ToLower() == "string?")
+        if (destinationTypeLow == "string?")
         {
             functionKey = $"{sourceType.ToLower()}-string";
             if (functions.TryGetValue(functionKey, out var f2))
             {
                 usedTypes.TryAdd(functionKey, new ConvertFunctionDefinition(f2.FunctionName, f2.FunctionBody, false));
                 return CallFunction(f2.FunctionName, expression);
+            }
+        }
+
+        if (source.Type != source.RawType || destination.Type != destination.RawType)
+        {
+            functionKey = $"{source.RawType.ToLower()}-{destination.RawType.ToLower()}";
+            if (functions.TryGetValue(functionKey, out var fs))
+            {
+                usedTypes.TryAdd(functionKey, new ConvertFunctionDefinition(fs.FunctionName, fs.FunctionBody, false));
+                return CallFunction(fs.FunctionName, expression);
             }
         }
 

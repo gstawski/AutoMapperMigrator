@@ -506,7 +506,7 @@
         <Function>
             <FunctionName>ToString</FunctionName>
             <InputTypeName>TimeSpan?</InputTypeName>
-            <OutputTypeName>string</OutputTypeName>
+            <OutputTypeName>string?</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
                 private static string? ToString(TimeSpan? value)
@@ -534,7 +534,7 @@
         <Function>
             <FunctionName>ToString</FunctionName>
             <InputTypeName>int?</InputTypeName>
-            <OutputTypeName>string</OutputTypeName>
+            <OutputTypeName>string?</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
                 private static string? ToString(int? value)
@@ -562,7 +562,7 @@
         <Function>
             <FunctionName>ToString</FunctionName>
             <InputTypeName>long?</InputTypeName>
-            <OutputTypeName>string</OutputTypeName>
+            <OutputTypeName>string?</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
                 private static string? ToString(long? value)
@@ -590,7 +590,7 @@
         <Function>
             <FunctionName>ToString</FunctionName>
             <InputTypeName>double?</InputTypeName>
-            <OutputTypeName>string</OutputTypeName>
+            <OutputTypeName>string?</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
                 private static string? ToString(double? value)
@@ -618,7 +618,7 @@
         <Function>
             <FunctionName>ToString</FunctionName>
             <InputTypeName>decimal?</InputTypeName>
-            <OutputTypeName>string</OutputTypeName>
+            <OutputTypeName>string?</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
                 private static string? ToString(decimal? value)
@@ -634,7 +634,7 @@
         <Function>
             <FunctionName>ToString</FunctionName>
             <InputTypeName>char?</InputTypeName>
-            <OutputTypeName>string</OutputTypeName>
+            <OutputTypeName>string?</OutputTypeName>
             <FunctionNameIsKey>0</FunctionNameIsKey>
             <FunctionBody>
                 private static string? ToString(char? value)

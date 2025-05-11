@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using AutoMapperMigratorConsole.Model;
 using Microsoft.CodeAnalysis.CSharp;
@@ -46,27 +45,32 @@ public class AutoMapperMappingsWalker : CSharpSyntaxWalker
                     }
                     else if (sourceExpression?.Body is ConditionalExpressionSyntax conditionalExpressionSyntax)
                     {
-                        _mappings.Add(
-                            new AutoMapperFieldInfo
-                            {
-                                SourceField = string.Empty,
-                                DestinationField = destMae.Name.Identifier.Text,
-                                Ignore = false,
-                                SyntaxNode = conditionalExpressionSyntax
-                            }
-                        );
+                        var mapping = new AutoMapperFieldInfo
+                        {
+                            SourceField = string.Empty,
+                            DestinationField = destMae.Name.Identifier.Text,
+                            Ignore = false,
+                            SyntaxNode = conditionalExpressionSyntax
+                        };
+
+                        if (!UniquenessCheck(mapping))
+                        {
+                            _mappings.Add(mapping);
+                        }
                     }
                     else if (sourceExpression?.Body is InvocationExpressionSyntax expressionSyntax)
                     {
-                        _mappings.Add(
-                            new AutoMapperFieldInfo
-                            {
-                                SourceField = string.Empty,
-                                DestinationField = destMae.Name.Identifier.Text,
-                                Ignore = false,
-                                SyntaxNode = expressionSyntax
-                            }
-                        );
+                        var mapping = new AutoMapperFieldInfo
+                        {
+                            SourceField = string.Empty,
+                            DestinationField = destMae.Name.Identifier.Text,
+                            Ignore = false,
+                            SyntaxNode = expressionSyntax
+                        };
+                        if (!UniquenessCheck(mapping))
+                        {
+                            _mappings.Add(mapping);
+                        }
                     }
                 }
 
