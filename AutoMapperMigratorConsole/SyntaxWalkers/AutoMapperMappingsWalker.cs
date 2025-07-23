@@ -4,7 +4,7 @@ using AutoMapperMigratorConsole.Model;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace AutoMapperMigratorConsole.WalkerCollectors;
+namespace AutoMapperMigratorConsole.SyntaxWalkers;
 
 public sealed class AutoMapperMappingsWalker : CSharpSyntaxWalker
 {

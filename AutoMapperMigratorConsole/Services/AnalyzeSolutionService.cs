@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using AutoMapperMigratorConsole.Interfaces;
 using AutoMapperMigratorConsole.Model;
 using AutoMapperMigratorConsole.Model.WorkspaceModels;
-using AutoMapperMigratorConsole.WalkerCollectors;
+using AutoMapperMigratorConsole.SyntaxWalkers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 

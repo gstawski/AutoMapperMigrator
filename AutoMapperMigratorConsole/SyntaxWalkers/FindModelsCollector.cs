@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace AutoMapperMigratorConsole.WalkerCollectors;
+namespace AutoMapperMigratorConsole.SyntaxWalkers;
 
 internal sealed class FindModelsCollector : CSharpSyntaxWalker
 {
