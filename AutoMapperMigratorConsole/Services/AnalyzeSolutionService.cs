@@ -126,6 +126,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
             var nameSpace = symbolSource.ContainingNamespace.ToString();
 
             var classDeclaration = GetClassDeclarationSyntax(symbolSource);
+
             var namespaces = GetNamespacesForClass(classDeclaration);
 
             FindPublicPropertiesCollector publicPropertiesCollector = new FindPublicPropertiesCollector();
