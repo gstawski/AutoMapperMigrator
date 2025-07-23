@@ -6,13 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapperMigratorConsole.Interfaces;
 using AutoMapperMigratorConsole.Model;
+using AutoMapperMigratorConsole.Model.WorkspaceModels;
 using AutoMapperMigratorConsole.WalkerCollectors;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.Services;
 
-public class AnalyzeSolutionService : IAnalyzeSolutionService
+public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
 {
     private readonly AppConfiguration _configuration;
     private readonly ICodeTreeGeneratorService _codeTreeGeneratorService;
@@ -65,7 +66,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         }
 
         var namespaceParts = new List<string>();
-        SyntaxNode? currentParent = classDeclaration.Parent;
+        SyntaxNode currentParent = classDeclaration.Parent;
 
         while (currentParent != null)
         {
@@ -85,7 +86,7 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
         namespaces.AddRange(namespaceParts);
 
         var allUsings = new List<UsingDirectiveSyntax>();
-        SyntaxNode? currentNode = classDeclaration;
+        SyntaxNode currentNode = classDeclaration;
 
         while (currentNode != null)
         {
@@ -225,21 +226,6 @@ public class AnalyzeSolutionService : IAnalyzeSolutionService
             return space;
         }
         return space.Substring(lastDotIndex+1);
-    }
-
-    private static string RemoveLastTypeSegment(string space)
-    {
-        if (string.IsNullOrEmpty(space))
-        {
-            return string.Empty;
-        }
-
-        var lastDotIndex = space.LastIndexOf('.');
-        if (lastDotIndex == -1)
-        {
-            return space;
-        }
-        return space.Substring(0, lastDotIndex);
     }
 
     private static string GetFullTypeName(SolutionContext solutionContext, List<string> spaces, string typeName)

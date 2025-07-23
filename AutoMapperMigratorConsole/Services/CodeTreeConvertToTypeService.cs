@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.Services;
 
-public class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
+public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 {
     private readonly AppConfiguration _appConfiguration;
 

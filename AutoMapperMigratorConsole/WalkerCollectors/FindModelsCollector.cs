@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.WalkerCollectors;
 
-internal class FindModelsCollector : CSharpSyntaxWalker
+internal sealed class FindModelsCollector : CSharpSyntaxWalker
 {
     public ICollection<ParameterSyntax> FunctionParameters { get; } = new List<ParameterSyntax>();
     

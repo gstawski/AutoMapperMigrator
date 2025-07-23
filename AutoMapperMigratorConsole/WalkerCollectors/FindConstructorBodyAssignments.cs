@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.WalkerCollectors;
 
-public class FindConstructorBodyAssignments : CSharpSyntaxWalker
+public sealed class FindConstructorBodyAssignments : CSharpSyntaxWalker
 {
     public Dictionary<string, string> FieldAssignments { get; } = new();
 

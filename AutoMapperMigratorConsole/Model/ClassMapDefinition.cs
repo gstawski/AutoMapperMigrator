@@ -2,7 +2,7 @@
 
 namespace AutoMapperMigratorConsole.Model;
 
-public class ClassMapDefinition
+public sealed class ClassMapDefinition
 {
     public ClassDefinition SourceClass { get; }
     public ClassDefinition DestinationClass { get; }

@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.Rewriters;
 
-public class IdentifierReplacer : CSharpSyntaxRewriter
+public sealed class IdentifierReplacer : CSharpSyntaxRewriter
 {
     private readonly string _oldSymbolName;
     private readonly string _newSymbolName;

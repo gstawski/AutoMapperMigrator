@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.Services;
 
-public class CodeTreeGeneratorService : ICodeTreeGeneratorService
+public sealed class CodeTreeGeneratorService : ICodeTreeGeneratorService
 {
     private readonly AppConfiguration _appConfiguration;
     private readonly ICodeTreeConvertToTypeService _codeTreeConvertToTypeService;

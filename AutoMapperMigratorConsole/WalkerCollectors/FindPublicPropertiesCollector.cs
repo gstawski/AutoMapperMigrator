@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.WalkerCollectors;
 
-public class FindPublicPropertiesCollector : CSharpSyntaxWalker
+public sealed class FindPublicPropertiesCollector : CSharpSyntaxWalker
 {
     private int _order;
     public ICollection<(string Name, string Type, int Order, bool IsSetPublic, bool IsSimleType)> Properties { get; } = new List<(string Name, string Type, int Order, bool IsSetPublic, bool IsSimleType)>();

@@ -1,9 +1,9 @@
 ﻿using System;
 using Microsoft.CodeAnalysis.MSBuild;
 
-namespace AutoMapperMigratorConsole
+namespace AutoMapperMigratorConsole.Model.WorkspaceModels
 {
-    public class ProgressBarProjectLoadStatus : IProgress<ProjectLoadProgress>
+    public sealed class WorkspaceProgressBarProjectLoadStatus : IProgress<ProjectLoadProgress>
     {
         public void Report(ProjectLoadProgress value)
         {

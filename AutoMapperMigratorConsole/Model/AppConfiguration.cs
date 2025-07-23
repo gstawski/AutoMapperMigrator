@@ -3,7 +3,7 @@ using AutoMapperMigratorConsole.Configuration;
 
 namespace AutoMapperMigratorConsole.Model;
 
-public class AppConfiguration
+public sealed class AppConfiguration
 {
     public bool UseFullNameSpace { get; set; }
     public string OutputPath { get; set; }

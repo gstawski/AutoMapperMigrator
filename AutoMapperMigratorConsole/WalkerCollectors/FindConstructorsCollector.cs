@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.WalkerCollectors;
 
-public class FindConstructorsCollector : CSharpSyntaxWalker
+public sealed class FindConstructorsCollector : CSharpSyntaxWalker
 {
     public ICollection<ConstructorDeclarationSyntax> Constructors { get; } = new List<ConstructorDeclarationSyntax>();
 

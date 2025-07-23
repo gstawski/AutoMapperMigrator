@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
 namespace AutoMapperMigratorConsole.Model;
 
-public class SolutionContext
+public sealed class SolutionContext
 {
     private readonly Dictionary<string, ISymbol> _models;
     private readonly string _mapFunctionPrefix;

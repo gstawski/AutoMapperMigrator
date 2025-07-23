@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.WalkerCollectors;
 
-public class AutoMapperMappingsWalker : CSharpSyntaxWalker
+public sealed class AutoMapperMappingsWalker : CSharpSyntaxWalker
 {
     private readonly List<AutoMapperFieldInfo> _mappings = new();
     private readonly Dictionary<string, byte> _uniquePropertyCheck = new();

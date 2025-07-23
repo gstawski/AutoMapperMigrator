@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 namespace AutoMapperMigratorConsole.Configuration;
 
 [XmlRoot(ElementName="ConvertFunctions")]
-public class ConvertFunctions
+public sealed class ConvertFunctions
 {
     [XmlElement(ElementName="Function")]
     public List<Function> Function { get; set; }

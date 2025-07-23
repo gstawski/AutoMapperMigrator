@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.WalkerCollectors;
 
-public class FindMemberAccessExpression : CSharpSyntaxWalker
+public sealed class FindMemberAccessExpression : CSharpSyntaxWalker
 {
     public string MemberName { get; private set; }
 

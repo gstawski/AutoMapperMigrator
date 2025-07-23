@@ -8,28 +8,18 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace AutoMapperMigratorConsole.Model
+namespace AutoMapperMigratorConsole.Model.WorkspaceModels
 {
-    public class WorkspaceProject : WorkspaceBase
+    public sealed class WorkspaceProject : WorkspaceBase
     {
         private readonly Project _project;
         private readonly Compilation _compilation;
-        private WorkspaceSolution _solution;
 
-        public string ProjectName
-        {
-            get { return Path.GetFileName(_project.FilePath); }
-        }
+        public string ProjectName => Path.GetFileName(_project.FilePath);
 
-        public string ProjectPath
-        {
-            get { return Path.GetDirectoryName(_project.FilePath); }
-        }
+        public string ProjectPath => Path.GetDirectoryName(_project.FilePath);
 
-        public string DefaultNamespace
-        {
-            get { return _project.DefaultNamespace; }
-        }
+        public string DefaultNamespace => _project.DefaultNamespace;
 
         public async Task<List<ISymbol>> AllProjectSymbols()
         {
@@ -60,16 +50,16 @@ namespace AutoMapperMigratorConsole.Model
             return ls;
         }
 
-        public static async Task<WorkspaceProject> LoadFromSolution(WorkspaceSolution solution, Project project)
+        public static async Task<WorkspaceProject> LoadFromSolution(Project project)
         {
             return project != null
-                ? await LoadProject(pb => Task.FromResult(project), solution)
+                ? await LoadProject(_ => Task.FromResult(project))
                 : null;
         }
 
-        private static async Task<WorkspaceProject> LoadProject(Func<ProgressBarProjectLoadStatus, Task<Project>> getProject, WorkspaceSolution solution)
+        private static async Task<WorkspaceProject> LoadProject(Func<WorkspaceProgressBarProjectLoadStatus, Task<Project>> getProject)
         {
-            var project = await getProject(new ProgressBarProjectLoadStatus());
+            var project = await getProject(new WorkspaceProgressBarProjectLoadStatus());
             var compilation = await project.GetCompilationAsync();
 
             compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
@@ -86,12 +76,11 @@ namespace AutoMapperMigratorConsole.Model
                 }
             }
 
-            return new WorkspaceProject(solution ?? new WorkspaceSolution(project.Solution), project, compilation);
+            return new WorkspaceProject(project, compilation);
         }
 
-        private WorkspaceProject(WorkspaceSolution solution, Project project, Compilation compilation)
+        private WorkspaceProject(Project project, Compilation compilation)
         {
-            _solution = solution;
             _project = project;
             _compilation = compilation;
         }

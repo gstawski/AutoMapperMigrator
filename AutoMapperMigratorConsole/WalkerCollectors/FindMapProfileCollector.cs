@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AutoMapperMigratorConsole.WalkerCollectors;
 
-public class FindMapProfileCollector : CSharpSyntaxWalker
+public sealed class FindMapProfileCollector : CSharpSyntaxWalker
 {
     public List<(string SourceType, string DestinationType, bool ReverseMap, ICollection<AutoMapperFieldInfo> FieldsMappings, ExpressionStatementSyntax Node)> MappingClassNamePairs { get; } = new ();
     private bool _isProfileClass;

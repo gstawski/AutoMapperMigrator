@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace AutoMapperMigratorConsole.Model;
 
-public class PropertyDefinition
+public sealed class PropertyDefinition
 {
     private static string SimplyTypeName(string typeName)
     {

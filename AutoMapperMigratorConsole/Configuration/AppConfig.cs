@@ -3,7 +3,7 @@
 namespace AutoMapperMigratorConsole.Configuration;
 
 [XmlRoot(ElementName = "AplicationConfiguration")]
-public class AppConfig
+public sealed class AppConfig
 {
     [XmlElement(ElementName = "OutputDirectoryPath")]
     public string OutputDirectoryPath { get; set; }
