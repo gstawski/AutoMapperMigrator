@@ -18,7 +18,7 @@ public sealed class AppConfiguration
 
     public List<string> DefaultNameSpaces { get; set; }
 
-    public Dictionary<string,Function> ConvertFunctions { get; set; }
+    public Dictionary<string,FunctionConfiguration> ConvertFunctions { get; set; }
 
     public Dictionary<string,byte> CollectionTypes { get; set; }
 }

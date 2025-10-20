@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AutoMapperMigratorConsole
 {
-    internal class Program
+    internal sealed class Program
     {
         private static void RegisterLocator()
         {
@@ -48,7 +48,7 @@ namespace AutoMapperMigratorConsole
                     return;
                 }
 
-                if (args.Length == 1 && args[0].Contains("?"))
+                if (args.Length == 1 && args[0].Contains('?'))
                 {
                     DisplayHelp();
                     return;

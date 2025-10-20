@@ -15,7 +15,7 @@ public sealed class IdentifierReplacer : CSharpSyntaxRewriter
         _newSymbolName = newSymbolName;
     }
 
-    public override SyntaxNode VisitIdentifierName(IdentifierNameSyntax node)
+    public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
     {
         if (node.Identifier.Text == _oldSymbolName)
         {

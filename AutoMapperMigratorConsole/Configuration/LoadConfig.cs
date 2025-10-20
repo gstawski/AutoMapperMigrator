@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
@@ -11,41 +12,44 @@ public static class LoadConfig
 {
     public static AppConfiguration ReadApplicationConfiguration()
     {
-        var convertFunctions = new Dictionary<string, Function>();
+        var convertFunctions = new Dictionary<string, FunctionConfiguration>();
 
         var data = File.ReadAllText("ConvertFunctionsConfiguration.xml");
 
         XmlSerializer serializer = new XmlSerializer(typeof(AppConfig));
         using (TextReader reader = new StringReader(data))
         {
-            AppConfig result = (AppConfig)serializer.Deserialize(reader);
+#pragma warning disable CA5369
+            var result = serializer.Deserialize(reader) as AppConfig;
+#pragma warning restore CA5369
+
 
             if (result == null
                 || result.FunctionsItems == null
                 || result.FunctionsItems.Function == null
                 || result.FunctionsItems.Function.Count == 0)
             {
-                throw new Exception("Error while deserializing ConvertFunctionsConfiguration.xml");
+                throw new ArgumentException("Error while deserializing ConvertFunctionsConfiguration.xml");
             }
 
             var functions = result.FunctionsItems.Function;
-            foreach (Function function in functions)
+            foreach (FunctionConfiguration function in functions)
             {
                 if (function.UseNameAsKey == 0)
                 {
                     if (!function.FunctionBody.Contains($" {function.FunctionName}("))
                     {
-                        throw new Exception($"Function {function.FunctionName} not found in body {function.FunctionBody}");
+                        throw new ArgumentException($"Function {function.FunctionName} not found in body {function.FunctionBody}");
                     }
 
                     if (!function.FunctionBody.Contains($" {function.OutputTypeName} "))
                     {
-                        throw new Exception($"Output type {function.OutputTypeName} not found in body {function.FunctionBody}");
+                        throw new ArgumentException($"Output type {function.OutputTypeName} not found in body {function.FunctionBody}");
                     }
 
                     if (!function.FunctionBody.Contains($"({function.InputTypeName} "))
                     {
-                        throw new Exception($"Input type {function.InputTypeName} not found in body {function.FunctionBody}");
+                        throw new ArgumentException($"Input type {function.InputTypeName} not found in body {function.FunctionBody}");
                     }
                 }
 
@@ -57,12 +61,12 @@ public static class LoadConfig
                 }
                 else
                 {
-                    key = $"{function.InputTypeName.ToLower()}-{function.OutputTypeName.ToLower()}";
+                    key = $"{function.InputTypeName.ToLower(CultureInfo.InvariantCulture)}-{function.OutputTypeName.ToLower(CultureInfo.InvariantCulture)}";
                 }
 
                 if (!convertFunctions.TryAdd(key, function))
                 {
-                    throw new Exception($"Function duplicate {function.FunctionName} InputTypeName={function.InputTypeName} OutputTypeName={function.OutputTypeName} Body={function.FunctionBody}");
+                    throw new ArgumentException($"Function duplicate {function.FunctionName} InputTypeName={function.InputTypeName} OutputTypeName={function.OutputTypeName} Body={function.FunctionBody}");
                 }
             }
 
@@ -73,7 +77,7 @@ public static class LoadConfig
             {
                 if (!collectionTypes.TryAdd(collectionType, i++))
                 {
-                    throw new Exception($"Collection type duplicate {collectionType}");
+                    throw new ArgumentException($"Collection type duplicate {collectionType}");
                 }
             }
 
@@ -88,7 +92,7 @@ public static class LoadConfig
                 OutputPath = result.OutputDirectoryPath,
                 OutputFileName = result.OutputFileName,
                 MapperClassName = result.MapperClassName,
-                DefaultNameSpaces = result.DefaultNameSpace?.NameSpaces,
+                DefaultNameSpaces = result.DefaultNameSpace.NameSpaces,
                 SearchClassPostfixes = classPostfixes,
                 ConvertFunctions = convertFunctions,
                 CollectionTypes = collectionTypes,

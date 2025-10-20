@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using AutoMapperMigratorConsole.Interfaces;
 using AutoMapperMigratorConsole.Model;
@@ -78,7 +79,7 @@ public sealed class CodeTreeGeneratorService : ICodeTreeGeneratorService
         return usings;
     }
 
-    private StatementSyntax CopyByConstructor(SolutionContext solutionContext, ClassMapDefinition classMap, Dictionary<string, ConvertFunctionDefinition> usedTypes)
+    private LocalDeclarationStatementSyntax CopyByConstructor(SolutionContext solutionContext, ClassMapDefinition classMap, Dictionary<string, ConvertFunctionDefinition> usedTypes)
     {
         var descClassName = classMap.DestinationClass.TypeName;
         if (_appConfiguration.UseFullNameSpace)
@@ -181,8 +182,10 @@ public sealed class CodeTreeGeneratorService : ICodeTreeGeneratorService
         statements.Add(propertyCopy);
     }
 
-    private static void AssignProperties(List<StatementSyntax> statements, MemberAccessExpressionSyntax left, ExpressionSyntax right)
+    private static void AssignProperties(List<StatementSyntax> statements, MemberAccessExpressionSyntax left, ExpressionSyntax? right)
     {
+        if (right == null)
+            return;
         var propertyCopy = SyntaxFactory.ExpressionStatement(
             SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, left, right));
         statements.Add(propertyCopy);
@@ -198,8 +201,13 @@ public sealed class CodeTreeGeneratorService : ICodeTreeGeneratorService
                             .WithArgumentList(SyntaxFactory.ArgumentList()))))));
     }
 
-    private static ExpressionSyntax ReplaceMemberName(SyntaxNode sourceNode, SyntaxNode descNode)
+    private static ExpressionSyntax? ReplaceMemberName(SyntaxNode? sourceNode, SyntaxNode? descNode)
     {
+        if (sourceNode == null || descNode == null)
+        {
+            return null;
+        }
+
         FindMemberAccessExpression memberAccessExpression = new FindMemberAccessExpression();
         memberAccessExpression.Visit(sourceNode);
 
@@ -213,7 +221,7 @@ public sealed class CodeTreeGeneratorService : ICodeTreeGeneratorService
             memberName = memberAccessExpression.MemberName;
         }
 
-        if (!string.IsNullOrEmpty(memberName) && memberName.Contains("."))
+        if (!string.IsNullOrEmpty(memberName) && memberName.Contains('.'))
         {
             memberName = memberName.Split('.').First();
         }
@@ -239,15 +247,15 @@ public sealed class CodeTreeGeneratorService : ICodeTreeGeneratorService
 
         var ignoreMap = classMap.FieldsMap
             .Where(x => x.Ignore)
-            .ToDictionary(x => x.DestinationField.ToLower(), _ => 0);
+            .ToDictionary(x => x.DestinationField.ToLower(CultureInfo.InvariantCulture), _ => 0);
 
         var definedMap = classMap.FieldsMap
             .Where(x => !string.IsNullOrEmpty(x.SourceField) && !x.AfterMap)
-            .ToDictionary(x => x.DestinationField.ToLower());
+            .ToDictionary(x => x.DestinationField.ToLower(CultureInfo.InvariantCulture));
 
         var codeMap = classMap.FieldsMap
             .Where(x => x.SyntaxNode != null && !x.AfterMap)
-            .ToDictionary(x => x.DestinationField.ToLower(), y => y.SyntaxNode);
+            .ToDictionary(x => x.DestinationField.ToLower(CultureInfo.InvariantCulture), y => y.SyntaxNode);
 
         foreach (var desc in descProperties)
         {
@@ -258,7 +266,7 @@ public sealed class CodeTreeGeneratorService : ICodeTreeGeneratorService
 
             if (definedMap.Count > 0
                 && definedMap.TryGetValue(desc.Key, out var dp)
-                && sourceProperties.TryGetValue(dp.SourceField.ToLower(), out var source0))
+                && sourceProperties.TryGetValue(dp.SourceField.ToLower(CultureInfo.InvariantCulture), out var source0))
             {
                 if (TypesAreEqual(desc.Value, source0))
                 {
@@ -308,7 +316,7 @@ public sealed class CodeTreeGeneratorService : ICodeTreeGeneratorService
             }
             else if (definedMap.Count == 0)
             {
-                if (desc.Value.Type == "string" || desc.Value.Type.EndsWith("?"))
+                if (desc.Value.Type == "string" || desc.Value.Type.EndsWith('?'))
                 {
                     var propertyCopy = SyntaxFactory.ExpressionStatement(
                         SyntaxFactory.AssignmentExpression(

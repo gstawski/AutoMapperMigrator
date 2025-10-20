@@ -15,11 +15,11 @@ namespace AutoMapperMigratorConsole.Model.WorkspaceModels
         private readonly Project _project;
         private readonly Compilation _compilation;
 
-        public string ProjectName => Path.GetFileName(_project.FilePath);
+        public string ProjectName => Path.GetFileName(_project.FilePath) ?? string.Empty;
 
-        public string ProjectPath => Path.GetDirectoryName(_project.FilePath);
+        public string ProjectPath => Path.GetDirectoryName(_project.FilePath) ?? string.Empty;
 
-        public string DefaultNamespace => _project.DefaultNamespace;
+        public string DefaultNamespace => _project.DefaultNamespace ?? string.Empty;
 
         public async Task<List<ISymbol>> AllProjectSymbols()
         {
@@ -34,15 +34,18 @@ namespace AutoMapperMigratorConsole.Model.WorkspaceModels
                     List<ClassDeclarationSyntax> lc = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
                     foreach (var c in lc)
                     {
-                        ISymbol s = m.GetDeclaredSymbol(c);
-                        ls.Add(s);
+                        var s = m.GetDeclaredSymbol(c);
+                        if (s != null)
+                            ls.Add(s);
+
                     }
 
                     List<EnumDeclarationSyntax> enc = root.DescendantNodes().OfType<EnumDeclarationSyntax>().ToList();
                     foreach (var c in enc)
                     {
-                        ISymbol s = m.GetDeclaredSymbol(c);
-                        ls.Add(s);
+                        var s = m.GetDeclaredSymbol(c);
+                        if (s != null)
+                            ls.Add(s);
                     }
                 }
             }
@@ -50,11 +53,9 @@ namespace AutoMapperMigratorConsole.Model.WorkspaceModels
             return ls;
         }
 
-        public static async Task<WorkspaceProject> LoadFromSolution(Project project)
+        public static Task<WorkspaceProject> LoadFromSolution(Project project)
         {
-            return project != null
-                ? await LoadProject(_ => Task.FromResult(project))
-                : null;
+            return LoadProject(_ => Task.FromResult(project));
         }
 
         private static async Task<WorkspaceProject> LoadProject(Func<WorkspaceProgressBarProjectLoadStatus, Task<Project>> getProject)
@@ -64,7 +65,7 @@ namespace AutoMapperMigratorConsole.Model.WorkspaceModels
 
             compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
 
-            var output = Path.Combine(Path.GetDirectoryName(project.FilePath), "bin");
+            var output = Path.Combine(Path.GetDirectoryName(project.FilePath) ?? string.Empty, "bin");
 
             if (Directory.Exists(output))
             {

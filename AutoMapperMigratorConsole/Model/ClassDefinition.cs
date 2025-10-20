@@ -7,7 +7,7 @@ public sealed class PropertyDefinition
 {
     private static string SimplyTypeName(string typeName)
     {
-        if (typeName.Contains(".") && !typeName.Contains("<"))
+        if (typeName.Contains('.') && !typeName.Contains('<'))
         {
             var split = typeName.Split('.');
             return split[^1];
@@ -24,7 +24,7 @@ public sealed class PropertyDefinition
         Order = order;
         IsPublicSet = isSetPublic;
         IsSimpleType = isSimpleType;
-        IsNullable = type.EndsWith("?");
+        IsNullable = type.EndsWith('?');
         RawType = SimplyTypeName(type);
     }
 
@@ -37,7 +37,7 @@ public sealed class PropertyDefinition
         IsPublicSet = true;
         IsSimpleType = isSimpleType;
         PropertyAssignment = propertyAssignment;
-        IsNullable = type.EndsWith("?");
+        IsNullable = type.EndsWith('?');
         RawType = SimplyTypeName(type);
     }
 
@@ -62,7 +62,7 @@ public sealed class PropertyDefinition
 
 public class ConstructorDefinition
 {
-    public Dictionary<string, PropertyDefinition> PropertiesAndTypes { get; set; }
+    public required Dictionary<string, PropertyDefinition> PropertiesAndTypes { get; init; }
 }
 
 public class ClassDefinition
@@ -107,7 +107,7 @@ public class ClassDefinition
                 return _typeNameWithNamespace;
             }
 
-            if (!TypeName.Contains("."))
+            if (!TypeName.Contains('.'))
             {
                 _typeNameWithNamespace = $"{Namespace}.{TypeName}";
                 return _typeNameWithNamespace;
@@ -126,7 +126,7 @@ public class ClassDefinition
 
     private static string NormalizeName(string name)
     {
-        if (name.Contains("."))
+        if (name.Contains('.'))
         {
             var index = name.LastIndexOf('.');
             name = name.Substring(index + 1);

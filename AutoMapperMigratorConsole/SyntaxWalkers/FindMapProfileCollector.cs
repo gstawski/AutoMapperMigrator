@@ -38,9 +38,9 @@ public sealed class FindMapProfileCollector : CSharpSyntaxWalker
         }
     }
 
-    private static ExpressionStatementSyntax FindParent(SyntaxNode node)
+    private static ExpressionStatementSyntax? FindParent(SyntaxNode? node)
     {
-        var parent = node.Parent;
+        var parent = node?.Parent;
         if (parent is ExpressionStatementSyntax)
         {
             return parent as ExpressionStatementSyntax;

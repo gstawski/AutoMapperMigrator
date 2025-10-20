@@ -3,7 +3,7 @@
 namespace AutoMapperMigratorConsole.Configuration;
 
 [XmlRoot(ElementName = "Function")]
-public sealed class Function
+public sealed class FunctionConfiguration
 {
     [XmlElement(ElementName="FunctionName")]
     public string FunctionName { get; set; }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -11,7 +12,7 @@ public sealed class FindPublicPropertiesCollector : CSharpSyntaxWalker
     private int _order;
     public ICollection<(string Name, string Type, int Order, bool IsSetPublic, bool IsSimleType)> Properties { get; } = new List<(string Name, string Type, int Order, bool IsSetPublic, bool IsSimleType)>();
 
-    private bool IsPublic(AccessorDeclarationSyntax accessor)
+    private static bool IsPublic(AccessorDeclarationSyntax accessor)
     {
         foreach (SyntaxToken token in accessor.Modifiers)
         {
@@ -50,15 +51,15 @@ public sealed class FindPublicPropertiesCollector : CSharpSyntaxWalker
 
             if (!isSimpleType)
             {
-                if (typeName.EndsWith("DateTime") || typeName.EndsWith("DateTime?"))
+                if (typeName.EndsWith("DateTime", StringComparison.Ordinal) || typeName.EndsWith("DateTime?", StringComparison.Ordinal))
                 {
                     isSimpleType = true;
                 }
-                else if (typeName.EndsWith("DateTimeOffset") || typeName.EndsWith("DateTimeOffset?"))
+                else if (typeName.EndsWith("DateTimeOffset", StringComparison.Ordinal) || typeName.EndsWith("DateTimeOffset?", StringComparison.Ordinal))
                 {
                     isSimpleType = true;
                 }
-                else if (typeName.EndsWith("TimeSpan") || typeName.EndsWith("TimeSpan?"))
+                else if (typeName.EndsWith("TimeSpan", StringComparison.Ordinal) || typeName.EndsWith("TimeSpan?", StringComparison.Ordinal))
                 {
                     isSimpleType = true;
                 }

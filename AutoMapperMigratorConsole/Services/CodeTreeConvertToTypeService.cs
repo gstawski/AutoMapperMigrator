@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using AutoMapperMigratorConsole.Interfaces;
 using AutoMapperMigratorConsole.Model;
 using Microsoft.CodeAnalysis;
@@ -70,7 +71,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
         return type;
     }
-    private string FullTypeName(ISymbol symbol, string type)
+    private string FullTypeName(ISymbol? symbol, string type)
     {
         if (!string.IsNullOrEmpty(type) && _appConfiguration.UseFullNameSpace && symbol != null)
         {
@@ -80,7 +81,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
         return type;
     }
 
-    private static bool IsEnumType(ISymbol symbol)
+    private static bool IsEnumType(ISymbol? symbol)
     {
         if (symbol == null)
         {
@@ -100,7 +101,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
     private static string NormalizeType(string name)
     {
-        if (name.Contains("."))
+        if (name.Contains('.'))
         {
             var index = name.LastIndexOf('.');
             name = name.Substring(index + 1);
@@ -173,7 +174,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
     {
         var destinationType = destination.Type;
         var sourceType = source.Type;
-        var functionKey = $"{sourceType.ToLower()}-{destination.Type.ToLower()}";
+        var functionKey = $"{sourceType.ToLower(CultureInfo.InvariantCulture)}-{destination.Type.ToLower(CultureInfo.InvariantCulture)}";
 
         var functions = _appConfiguration.ConvertFunctions;
 
@@ -183,10 +184,10 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
             return CallFunction(f.FunctionName, expression);
         }
 
-        var destinationTypeLow = destination.RawType.ToLower();
+        var destinationTypeLow = destination.RawType.ToLower(CultureInfo.InvariantCulture);
         if (destinationTypeLow == "string")
         {
-            functionKey = $"{source.RawType.ToLower()}-string?";
+            functionKey = $"{source.RawType.ToLower(CultureInfo.InvariantCulture)}-string?";
             if (functions.TryGetValue(functionKey, out var fs))
             {
                 usedTypes.TryAdd(functionKey, new ConvertFunctionDefinition(fs.FunctionName, fs.FunctionBody, false));
@@ -196,7 +197,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
         if (destinationTypeLow == "string?")
         {
-            functionKey = $"{sourceType.ToLower()}-string";
+            functionKey = $"{sourceType.ToLower(CultureInfo.InvariantCulture)}-string";
             if (functions.TryGetValue(functionKey, out var f2))
             {
                 usedTypes.TryAdd(functionKey, new ConvertFunctionDefinition(f2.FunctionName, f2.FunctionBody, false));
@@ -206,7 +207,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
         if (source.Type != source.RawType || destination.Type != destination.RawType)
         {
-            functionKey = $"{source.RawType.ToLower()}-{destination.RawType.ToLower()}";
+            functionKey = $"{source.RawType.ToLower(CultureInfo.InvariantCulture)}-{destination.RawType.ToLower(CultureInfo.InvariantCulture)}";
             if (functions.TryGetValue(functionKey, out var fs))
             {
                 usedTypes.TryAdd(functionKey, new ConvertFunctionDefinition(fs.FunctionName, fs.FunctionBody, false));
@@ -275,7 +276,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
             return CallFunction(function, expression);
         }
 
-        if (destinationType.Contains("<"))
+        if (destinationType.Contains('<'))
         {
             var collectionTypes = _appConfiguration.CollectionTypes;
 
@@ -332,7 +333,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
             }
         }
 
-        if (destinationType.EndsWith("[]"))
+        if (destinationType.EndsWith("[]", StringComparison.Ordinal))
         {
             var ntype = destinationType.TrimEnd('[', ']');
 
@@ -363,7 +364,8 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
         foreach (var t in usedTypes.Values)
         {
             var method = SyntaxFactory.ParseMemberDeclaration(t.Body);
-            classMethods.Add(method);
+            if (method != null)
+                classMethods.Add(method);
         }
 
         return classMethods;

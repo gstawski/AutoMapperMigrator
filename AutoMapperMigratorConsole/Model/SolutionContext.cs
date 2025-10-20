@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
 namespace AutoMapperMigratorConsole.Model;
@@ -28,7 +29,7 @@ public sealed class SolutionContext
             var key = "." + type;
             foreach (var m in _models.Keys)
             {
-                if (m.EndsWith(key))
+                if (m.EndsWith(key, StringComparison.InvariantCulture))
                 {
                     return true;
                 }
@@ -38,9 +39,9 @@ public sealed class SolutionContext
         return f;
     }
 
-    public ISymbol TryGetSolutionSymbol(string type, List<string> namespaces)
+    public ISymbol? TryGetSolutionSymbol(string type, List<string> namespaces)
     {
-        if (type.EndsWith("?"))
+        if (type.EndsWith('?'))
         {
             type = type.Substring(0, type.Length - 1);
         }
@@ -61,14 +62,14 @@ public sealed class SolutionContext
         return null;
     }
 
-    public ISymbol TryGetSolutionSymbol(string type)
+    public ISymbol? TryGetSolutionSymbol(string type)
     {
         if (string.IsNullOrEmpty(type))
         {
             return null;
         }
 
-        if (type.EndsWith("?"))
+        if (type.EndsWith('?'))
         {
             type = type.Substring(0, type.Length - 1);
         }
@@ -81,7 +82,7 @@ public sealed class SolutionContext
         var key = "." + type;
         foreach (var m in _models.Keys)
         {
-            if (m.EndsWith(key))
+            if (m.EndsWith(key, StringComparison.InvariantCulture))
             {
                 return _models[m];
             }
@@ -90,9 +91,9 @@ public sealed class SolutionContext
         return null;
     }
 
-    public ISymbol FindClassSymbol(string className)
+    public ISymbol? FindClassSymbol(string className)
     {
-        if (_models.TryGetValue(className, out ISymbol model))
+        if (_models.TryGetValue(className, out ISymbol? model))
         {
             return model;
         }
@@ -100,7 +101,7 @@ public sealed class SolutionContext
         var nameWithDot = "." + className;
         foreach (var m in _models)
         {
-            if (m.Key.EndsWith(nameWithDot))
+            if (m.Key.EndsWith(nameWithDot, StringComparison.InvariantCulture))
             {
                 return m.Value;
             }

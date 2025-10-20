@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
@@ -42,7 +41,7 @@ namespace AutoMapperMigratorConsole.Model.WorkspaceModels
                 foreach (var item in sym)
                 {
                     var key = item.ToString();
-                    if (!allSymbols.TryAdd(key, item))
+                    if (!string.IsNullOrEmpty(key) && !allSymbols.TryAdd(key, item))
                     {
                         await Console.Out.WriteLineAsync($"Duplicate: {key}");
                     }
@@ -61,7 +60,7 @@ namespace AutoMapperMigratorConsole.Model.WorkspaceModels
                 await Console.Out.WriteLineAsync($"Scan for AutoMapperProfile {p.ProjectName}");
                 
                 var list = await p.FindAutoMapper();
-                if (list.Any())
+                if (list.Count != 0)
                 {
                     await Console.Out.WriteLineAsync($"Found {list.Count} profiles in {p.DefaultNamespace}");
 

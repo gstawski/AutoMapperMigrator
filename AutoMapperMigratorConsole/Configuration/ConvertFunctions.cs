@@ -7,5 +7,5 @@ namespace AutoMapperMigratorConsole.Configuration;
 public sealed class ConvertFunctions
 {
     [XmlElement(ElementName="Function")]
-    public List<Function> Function { get; set; }
+    public List<FunctionConfiguration> Function { get; set; }
 }

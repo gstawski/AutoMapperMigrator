@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -17,6 +18,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
 {
     private readonly AppConfiguration _configuration;
     private readonly ICodeTreeGeneratorService _codeTreeGeneratorService;
+    private static readonly char[] separator = new[] { '<', '>', ',', ' ' };
 
     private static async Task<List<WorkspaceAutoMapper>> GetMapperProfiles(WorkspaceSolution solution)
     {
@@ -31,7 +33,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
         return profiles;
     }
 
-    private static ClassDeclarationSyntax GetClassDeclarationSyntax(ISymbol symbol)
+    private static ClassDeclarationSyntax? GetClassDeclarationSyntax(ISymbol symbol)
     {
         if (symbol is not ITypeSymbol typeSymbol || typeSymbol.TypeKind != TypeKind.Class)
         {
@@ -56,7 +58,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
         return null;
     }
 
-    private static List<string> GetNamespacesForClass(ClassDeclarationSyntax classDeclaration)
+    private static List<string> GetNamespacesForClass(ClassDeclarationSyntax? classDeclaration)
     {
         List<string> namespaces = new List<string>();
 
@@ -66,7 +68,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
         }
 
         var namespaceParts = new List<string>();
-        SyntaxNode currentParent = classDeclaration.Parent;
+        var currentParent = classDeclaration.Parent;
 
         while (currentParent != null)
         {
@@ -86,7 +88,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
         namespaces.AddRange(namespaceParts);
 
         var allUsings = new List<UsingDirectiveSyntax>();
-        SyntaxNode currentNode = classDeclaration;
+        SyntaxNode? currentNode = classDeclaration;
 
         while (currentNode != null)
         {
@@ -105,7 +107,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
         foreach (var usingDirective in allUsings)
         {
             var namespaceName = usingDirective.Name?.ToString();
-            if (!string.IsNullOrEmpty(namespaceName) && !namespaceName.StartsWith("System"))
+            if (!string.IsNullOrEmpty(namespaceName) && !namespaceName.StartsWith("System", StringComparison.Ordinal))
             {
                 namespaces.Add(namespaceName);
             }
@@ -137,18 +139,18 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
                 foreach (var prop in publicPropertiesCollector.Properties)
                 {
                     var typeName = prop.Type;
-                    if (typeName.Contains("."))
+                    if (typeName.Contains('.'))
                     {
                         typeName = FixTypeName(typeName);
                     }
 
-                    string fullTypeName = null;
+                    string? fullTypeName = null;
                     if (!prop.IsSimleType)
                     {
                         fullTypeName = GetFullTypeName(solutionContext, namespaces, prop.Type);
                     }
 
-                    properties.Add(prop.Name.ToLower(), new PropertyDefinition(prop.Name, typeName, fullTypeName, prop.Order, prop.IsSetPublic, prop.IsSimleType));
+                    properties.Add(prop.Name.ToLower(CultureInfo.InvariantCulture), new PropertyDefinition(prop.Name, typeName, fullTypeName ?? string.Empty, prop.Order, prop.IsSetPublic, prop.IsSimleType));
                 }
             }
 
@@ -182,7 +184,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
                 }
             }
 
-            return new ClassDefinition(className, nameSpace, properties, constructors);
+            return new ClassDefinition(className, nameSpace ?? string.Empty, properties, constructors);
         }
 
         return new ClassDefinition(className, string.Empty, new Dictionary<string, PropertyDefinition>(), constructors);
@@ -190,13 +192,13 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
 
     private static string FixTypeName(string typeName)
     {
-        if (typeName.Contains("<"))
+        if (typeName.Contains('<'))
         {
             var split = typeName.Split(new[] { '<', '>', ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             for (int i = 0; i < split.Count; i++)
             {
                 var type = split[i];
-                if (type.Contains("."))
+                if (type.Contains('.'))
                 {
                     split[i] = GetLastTypeSegment(type);
                 }
@@ -205,7 +207,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
             return split[0] + "<" + string.Join(",", split.Skip(1)) + ">";
         }
 
-        if (typeName.Contains("."))
+        if (typeName.Contains('.'))
         {
             return GetLastTypeSegment(typeName);
         }
@@ -228,14 +230,14 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
         return space.Substring(lastDotIndex+1);
     }
 
-    private static string GetFullTypeName(SolutionContext solutionContext, List<string> spaces, string typeName)
+    private static string? GetFullTypeName(SolutionContext solutionContext, List<string> spaces, string typeName)
     {
         if (string.IsNullOrEmpty(typeName))
         {
             return null;
         }
 
-        var split = typeName.Split(new[] { '<', '>', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var split = typeName.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 
         if (split.Length == 1)
         {
@@ -276,15 +278,15 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
 
             if (!isSimpleType)
             {
-                if (typeName.EndsWith("DateTime") || typeName.EndsWith("DateTime?"))
+                if (typeName.EndsWith("DateTime", StringComparison.Ordinal) || typeName.EndsWith("DateTime?", StringComparison.Ordinal))
                 {
                     isSimpleType = true;
                 }
-                else if (typeName.EndsWith("DateTimeOffset") || typeName.EndsWith("DateTimeOffset?"))
+                else if (typeName.EndsWith("DateTimeOffset", StringComparison.Ordinal) || typeName.EndsWith("DateTimeOffset?", StringComparison.Ordinal))
                 {
                     isSimpleType = true;
                 }
-                else if (typeName.EndsWith("TimeSpan") || typeName.EndsWith("TimeSpan?"))
+                else if (typeName.EndsWith("TimeSpan", StringComparison.Ordinal) || typeName.EndsWith("TimeSpan?", StringComparison.Ordinal))
                 {
                     isSimpleType = true;
                 }
@@ -292,18 +294,18 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
 
             if (bodyCollectorFieldAssignments.TryGetValue(name, out var assignment))
             {
-                string fullTypeName = null;
+                string? fullTypeName = null;
                 if (!isSimpleType)
                 {
-                    fullTypeName = GetFullTypeName(solutionContext, spaces, typeName);
+                    fullTypeName = GetFullTypeName(solutionContext, spaces, typeName ?? string.Empty);
                 }
 
-                if (!string.IsNullOrEmpty(typeName) && typeName.Contains("."))
+                if (!string.IsNullOrEmpty(typeName) && typeName.Contains('.'))
                 {
                     typeName = FixTypeName(typeName);
                 }
 
-                ctorParams.Add(assignment.ToLower(), new PropertyDefinition(name, typeName, fullTypeName, ++order, assignment, isSimpleType));
+                ctorParams.Add(assignment.ToLower(CultureInfo.InvariantCulture), new PropertyDefinition(name, typeName ?? string.Empty, fullTypeName ?? string.Empty, ++order, assignment, isSimpleType));
             }
         }
 
@@ -316,9 +318,9 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
         {
             if (!prp.IsSimpleType)
             {
-                if (prp.Type.Contains("<"))
+                if (prp.Type.Contains('<'))
                 {
-                    var split = prp.Type.Split(new[] { '<', '>', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    var split = prp.Type.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 
                     if (split.Length == 2)
                     {
@@ -523,14 +525,14 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
 
         if (sourceSymbol == null)
         {
-            throw new Exception("Source symbol not found");
+            throw new ArgumentException("Source symbol not found");
         }
 
         var destinationSymbol = solutionContext.TryGetSolutionSymbol(destinationClass);
 
         if (destinationSymbol == null)
         {
-            throw new Exception("Destination symbol not found");
+            throw new ArgumentException("Destination symbol not found");
         }
 
         CreateMapDefinition(solutionContext, _configuration, sourceClass, destinationClass);
