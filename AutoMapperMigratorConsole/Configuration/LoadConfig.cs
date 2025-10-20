@@ -37,17 +37,12 @@ public static class LoadConfig
             {
                 if (function.UseNameAsKey == 0)
                 {
-                    if (!function.FunctionBody.Contains($" {function.FunctionName}("))
-                    {
-                        throw new ArgumentException($"Function {function.FunctionName} not found in body {function.FunctionBody}");
-                    }
-
-                    if (!function.FunctionBody.Contains($" {function.OutputTypeName} "))
+                    if (!function.FunctionBody.Contains($" {function.OutputTypeName} ", StringComparison.Ordinal))
                     {
                         throw new ArgumentException($"Output type {function.OutputTypeName} not found in body {function.FunctionBody}");
                     }
 
-                    if (!function.FunctionBody.Contains($"({function.InputTypeName} "))
+                    if (!function.FunctionBody.Contains($"({function.InputTypeName} ", StringComparison.Ordinal))
                     {
                         throw new ArgumentException($"Input type {function.InputTypeName} not found in body {function.FunctionBody}");
                     }

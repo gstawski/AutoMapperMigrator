@@ -24,6 +24,7 @@ public sealed class PropertyDefinition
         Order = order;
         IsPublicSet = isSetPublic;
         IsSimpleType = isSimpleType;
+        PropertyAssignment = null;
         IsNullable = type.EndsWith('?');
         RawType = SimplyTypeName(type);
     }
@@ -43,7 +44,7 @@ public sealed class PropertyDefinition
 
     public string Name { get; }
 
-    public string PropertyAssignment { get; }
+    public string? PropertyAssignment { get; }
 
     public string Type { get; }
 
@@ -67,7 +68,7 @@ public class ConstructorDefinition
 
 public class ClassDefinition
 {
-    private string _typeNameWithNamespace;
+    private string? _typeNameWithNamespace;
 
     public ClassDefinition(string typeName, string fullNamespace, Dictionary<string, PropertyDefinition> propertyDefinitions, List<ConstructorDefinition> constructors)
     {

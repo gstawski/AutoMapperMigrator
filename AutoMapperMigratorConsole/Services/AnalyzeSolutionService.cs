@@ -18,7 +18,8 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
 {
     private readonly AppConfiguration _configuration;
     private readonly ICodeTreeGeneratorService _codeTreeGeneratorService;
-    private static readonly char[] separator = new[] { '<', '>', ',', ' ' };
+    private static readonly char[] SeparatorWithSpace = ['<', '>', ',', ' '];
+    private static readonly char[] SeparatorShort = ['<', '>', ','];
 
     private static async Task<List<WorkspaceAutoMapper>> GetMapperProfiles(WorkspaceSolution solution)
     {
@@ -194,7 +195,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
     {
         if (typeName.Contains('<'))
         {
-            var split = typeName.Split(new[] { '<', '>', ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            var split = typeName.Split(SeparatorShort, StringSplitOptions.RemoveEmptyEntries).ToList();
             for (int i = 0; i < split.Count; i++)
             {
                 var type = split[i];
@@ -237,7 +238,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
             return null;
         }
 
-        var split = typeName.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+        var split = typeName.Split(SeparatorWithSpace, StringSplitOptions.RemoveEmptyEntries);
 
         if (split.Length == 1)
         {
@@ -276,7 +277,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
             var isSimpleType = m.Type is PredefinedTypeSyntax ||
                                (m.Type is NullableTypeSyntax nullableType && nullableType.ElementType is PredefinedTypeSyntax);
 
-            if (!isSimpleType)
+            if (!isSimpleType && !string.IsNullOrEmpty(typeName))
             {
                 if (typeName.EndsWith("DateTime", StringComparison.Ordinal) || typeName.EndsWith("DateTime?", StringComparison.Ordinal))
                 {
@@ -320,7 +321,7 @@ public sealed class AnalyzeSolutionService : IAnalyzeSolutionService
             {
                 if (prp.Type.Contains('<'))
                 {
-                    var split = prp.Type.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                    var split = prp.Type.Split(SeparatorWithSpace, StringSplitOptions.RemoveEmptyEntries);
 
                     if (split.Length == 2)
                     {

@@ -265,6 +265,50 @@
             </FunctionBody>
         </Function>
         <Function>
+            <FunctionName>ToNullableDecimal</FunctionName>
+            <InputTypeName>double?</InputTypeName>
+            <OutputTypeName>decimal?</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static decimal? ToDecimal(double? value)
+                {
+                if (!input.HasValue)
+                return null;
+
+                try
+                {
+                return Convert.ToDecimal(input.Value);
+                }
+                catch (OverflowException)
+                {
+                throw new OverflowException("Double value is too large for decimal conversion");
+                }
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToDecimal</FunctionName>
+            <InputTypeName>double?</InputTypeName>
+            <OutputTypeName>decimal</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static decimal ToDecimal(double? value)
+                {
+                if (!input.HasValue)
+                return 0;
+
+                try
+                {
+                return Convert.ToDecimal(input.Value);
+                }
+                catch (OverflowException)
+                {
+                throw new OverflowException("Double value is too large for decimal conversion");
+                }
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
             <FunctionName>ToDouble</FunctionName>
             <InputTypeName>double?</InputTypeName>
             <OutputTypeName>double</OutputTypeName>
@@ -656,6 +700,18 @@
                 private static string ToString(char value)
                 {
                 return new string([value]);
+                }
+            </FunctionBody>
+        </Function>
+        <Function>
+            <FunctionName>ToString</FunctionName>
+            <InputTypeName>string?</InputTypeName>
+            <OutputTypeName>string</OutputTypeName>
+            <FunctionNameIsKey>0</FunctionNameIsKey>
+            <FunctionBody>
+                private static string ToString(string? value)
+                {
+                return value ?? string.Empty;
                 }
             </FunctionBody>
         </Function>

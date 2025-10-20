@@ -42,6 +42,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
         { "ulong", 27 },
         { "ulong?", 28 }
     };
+    private static readonly char[] Separator = ['<', '>', ',', ' '];
 
     public CodeTreeConvertToTypeService(AppConfiguration appConfiguration)
     {
@@ -50,7 +51,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
     private static string GetGenericType(string type)
     {
-        var split = type.Split(new[] { '<', '>', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var split = type.Split(Separator, StringSplitOptions.RemoveEmptyEntries);
         if (split.Length > 1)
         {
             return NormalizeType(split[1]);
@@ -254,7 +255,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
         {
             if (IsEnumType(sourceSymbol))
             {
-                var code = $@"
+                var code = destinationType == "string?" ? $@"
     private static {destinationType} ToString({sourceType} en)
     {{
         if (en.HasValue)
@@ -264,7 +265,14 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
 
         return null;
     }}
-";
+" :
+$@"
+    private static {destinationType} ToString({sourceType} en)
+    {{
+        return Enum.GetName(en.GetType(), en);
+    }}
+"
+                        ;
                 usedTypes.TryAdd(functionKey, new ConvertFunctionDefinition("ToString", code, false));
                 return CallFunction("ToString", expression);
             }
@@ -280,7 +288,7 @@ public sealed class CodeTreeConvertToTypeService : ICodeTreeConvertToTypeService
         {
             var collectionTypes = _appConfiguration.CollectionTypes;
 
-            var split = destinationType.Split(new[] { '<', '>', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var split = destinationType.Split(Separator, StringSplitOptions.RemoveEmptyEntries);
             if (split.Length > 1)
             {
                 var ntype = NormalizeType(split[0]);
